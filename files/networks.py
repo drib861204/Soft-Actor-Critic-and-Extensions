@@ -44,8 +44,8 @@ class Actor(nn.Module):
 
     def forward(self, state):
 
-        x = F.relu(self.fc1(state), inplace=True)
-        x = F.relu(self.fc2(x), inplace=True)
+        x = F.relu(self.fc1(state))
+        x = F.relu(self.fc2(x))
         mu = self.mu(x)
 
         log_std = self.log_std_linear(x)
@@ -68,13 +68,16 @@ class Actor(nn.Module):
         returns the action based on a squashed gaussian policy. That means the samples are obtained according to:
         a(s,e)= tanh(mu(s)+sigma(s)+e)
         """
-        #state = torch.FloatTensor(state).to(device) #.unsqzeeze(0)
         mu, log_std = self.forward(state)
         std = log_std.exp()
         dist = Normal(mu, std)
         e = dist.rsample().to(self.device)
         action = torch.tanh(e)
         return action.detach().cpu()
+    
+    def get_det_action(self, state):
+        mu, log_std = self.forward(state)
+        return torch.tanh(mu).detach().cpu()
 
 
 class Critic(nn.Module):
@@ -151,13 +154,13 @@ class DeepActor(nn.Module):
 
     def forward(self, state: torch.tensor)-> (float, float):
 
-        x = F.relu(self.fc1(state), inplace=True)
+        x = F.relu(self.fc1(state))
         x = torch.cat([x, state], dim=1)
-        x = F.relu(self.fc2(x), inplace=True)
+        x = F.relu(self.fc2(x))
         x = torch.cat([x, state], dim=1)
-        x = F.relu(self.fc3(x), inplace=True)
+        x = F.relu(self.fc3(x))
         x = torch.cat([x, state], dim=1)
-        x = F.relu(self.fc4(x), inplace=True)  
+        x = F.relu(self.fc4(x))  
 
         mu = self.mu(x)
 
@@ -188,7 +191,10 @@ class DeepActor(nn.Module):
         e = dist.rsample().to(self.device)
         action = torch.tanh(e)
         return action.detach().cpu()
-
+    
+    def get_det_action(self, state):
+        mu, log_std = self.forward(state)
+        return torch.tanh(mu).detach().cpu()
 
 class DeepCritic(nn.Module):
     """Critic (Value) Model."""

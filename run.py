@@ -32,8 +32,8 @@ def evaluate(frame, eval_runs=5, capture=False, render=False):
 
         rewards = 0
         while True:
-            action = agent.act(np.expand_dims(state, axis=0))
-            action_v = np.clip(action*action_high, action_low, action_high)
+            action = agent.act(np.expand_dims(state, axis=0), eval=True)
+            action_v = np.clip(action, action_low, action_high)
             state, reward, done, _ = eval_env.step(action_v[0])
             rewards += reward
             if done:
@@ -74,7 +74,7 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
             evaluate(frame*worker, eval_runs, render=args.render_evals)
 
         action = agent.act(state)
-        action_v = np.clip(action*action_high, action_low, action_high)
+        action_v = np.clip(action, action_low, action_high)
         next_state, reward, done, _ = envs.step(action_v) #returns np.stack(obs), np.stack(action) ...
 
         for s, a, r, ns, d in zip(state, action, reward, next_state, done):

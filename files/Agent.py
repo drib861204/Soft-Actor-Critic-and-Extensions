@@ -63,9 +63,10 @@ class Agent():
         self.tau = tau
 
         self.target_entropy = -action_size  # -dim(A)
-        self.alpha = 1
+
         self.FIXED_ALPHA = FIXED_ALPHA
         self.log_alpha = torch.tensor([0.0], requires_grad=True)
+        self.alpha = self.log_alpha.exp()
         self.alpha_optimizer = optim.Adam(params=[self.log_alpha], lr=lr_a) 
         self._action_prior = action_prior
         
@@ -156,12 +157,31 @@ class Agent():
         self.learn(1, experiences, self.GAMMA)
             
     
-    def act(self, state):
+    def act(self, state, eval=False):
         """Returns actions for given state as per current policy."""
         state = torch.from_numpy(state).float().to(self.device)
+        
         with torch.no_grad():
-            action = self.actor_local.get_action(state)
+            if eval:
+                action = self.actor_local.get_det_action(state)
+            else:
+                action = self.actor_local.get_action(state)
         return action.numpy()
+
+    def calc_policy_loss(self, states, alpha, weights=1):
+        actions_pred, log_pis = self.actor_local.evaluate(states)
+        # Compute actor loss
+        if self._action_prior == "normal":
+            policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
+            policy_prior_log_probs = policy_prior.log_prob(actions_pred)
+        elif self._action_prior == "uniform":
+            policy_prior_log_probs = 0.0
+
+        q1 = self.critic1(states, actions_pred.squeeze(0))   
+        q2 = self.critic2(states, actions_pred.squeeze(0))
+        min_Q = torch.min(q1,q2).cpu()
+        actor_loss = ((alpha * log_pis.cpu() - min_Q - policy_prior_log_probs)*weights).mean()
+        return actor_loss, log_pis
 
     def learn_(self, step, experiences, gamma, d=1):
         """Updates actor, critics and entropy_alpha parameters using given batch of experience tuples.
@@ -226,46 +246,23 @@ class Agent():
         if step % d == 0:
         # ---------------------------- update actor ---------------------------- #
             if self.FIXED_ALPHA == None:
-                alpha = torch.exp(self.log_alpha)
+                actor_loss, log_pis = self.calc_policy_loss(states, self.alpha.detach())
+                self.actor_optimizer.zero_grad()
+                actor_loss.backward()
+                self.actor_optimizer.step()
+                
                 # Compute alpha loss
-                actions_pred, log_pis = self.actor_local.evaluate(states)
-                alpha_loss = - (alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = - (self.alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
-                
-                self.alpha = alpha.detach()
-                # Compute actor loss
-                if self._action_prior == "normal":
-                    policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
-                    policy_prior_log_probs = policy_prior.log_prob(actions_pred)
-                elif self._action_prior == "uniform":
-                    policy_prior_log_probs = 0.0
+                self.alpha = self.log_alpha.exp()
 
-
-                q1 = self.critic1(states, actions_pred.squeeze(0))   
-                q2 = self.critic2(states, actions_pred.squeeze(0))
-                min_Q = torch.min(q1,q2).cpu()
-                actor_loss = (alpha.detach() * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
-                
             else:
-                
-                actions_pred, log_pis = self.actor_local.evaluate(states)
-                if self._action_prior == "normal":
-                    policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
-                    policy_prior_log_probs = policy_prior.log_prob(actions_pred)
-                elif self._action_prior == "uniform":
-                    policy_prior_log_probs = 0.0
-                
-
-                q1 = self.critic1(states, actions_pred.squeeze(0))   
-                q2 = self.critic2(states, actions_pred.squeeze(0))
-                min_Q = torch.min(q1,q2).cpu()
-                actor_loss = (self.FIXED_ALPHA * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
-            # Minimize the loss
-            self.actor_optimizer.zero_grad()
-            actor_loss.backward()
-            self.actor_optimizer.step()
+                actor_loss, _ = self.calc_policy_loss(states, self.FIXED_ALPHA)
+                self.actor_optimizer.zero_grad()
+                actor_loss.backward()
+                self.actor_optimizer.step()
 
             # ----------------------- update target networks ----------------------- #
             self.soft_update(self.critic1, self.critic1_target)
@@ -337,32 +334,17 @@ class Agent():
             self.memory.update_priorities(idx, prios.data.cpu().numpy())
             if step % d == 0:
             # ---------------------------- update actor ---------------------------- #
-                
-                alpha = torch.exp(self.log_alpha)
-                # Compute alpha loss
-                actions_pred, log_pis = self.actor_local.evaluate(states)
-                alpha_loss = - (alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
-                self.alpha_optimizer.zero_grad()
-                alpha_loss.backward()
-                self.alpha_optimizer.step()
-                
-                self.alpha = alpha.detach()
-                # Compute actor loss
-                if self._action_prior == "normal":
-                    policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
-                    policy_prior_log_probs = policy_prior.log_prob(actions_pred)
-                elif self._action_prior == "uniform":
-                    policy_prior_log_probs = 0.0
-                
-                q1 = self.critic1(states, actions_pred.squeeze(0))   
-                q2 = self.critic2(states, actions_pred.squeeze(0))
-                min_Q = torch.min(q1,q2).cpu()
-                actor_loss = ((alpha.detach() * log_pis.cpu() - min_Q - policy_prior_log_probs )*weights).mean()
-
+                actor_loss, log_pis = self.calc_policy_loss(states, self.alpha.detach(), weights=weights)
                 # Minimize the loss
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
                 self.actor_optimizer.step()
+                
+                alpha_loss = - (self.alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                self.alpha_optimizer.zero_grad()
+                alpha_loss.backward()
+                self.alpha_optimizer.step()
+                self.alpha = self.log_alpha.exp()
 
                 # ----------------------- update target networks ----------------------- #
                 self.soft_update(self.critic1, self.critic1_target)
@@ -477,7 +459,7 @@ class Agent():
                 q1 = self.critic1.get_qvalues(states, actions_pred.squeeze(0))   
                 q2 = self.critic2.get_qvalues(states, actions_pred.squeeze(0))
                 min_Q = torch.min(q1,q2).cpu()
-                actor_loss = (alpha.detach() * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
+                actor_loss = (alpha.detach() * log_pis.cpu() - min_Q - policy_prior_log_probs).mean()
                 
             else:
                 
