@@ -229,12 +229,12 @@ class Agent():
                 alpha = torch.exp(self.log_alpha)
                 # Compute alpha loss
                 actions_pred, log_pis = self.actor_local.evaluate(states)
-                alpha_loss = - (self.log_alpha.cpu() * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = - (alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
                 
-                self.alpha = alpha
+                self.alpha = alpha.detach()
                 # Compute actor loss
                 if self._action_prior == "normal":
                     policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
@@ -242,10 +242,11 @@ class Agent():
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
 
+
                 q1 = self.critic1(states, actions_pred.squeeze(0))   
                 q2 = self.critic2(states, actions_pred.squeeze(0))
                 min_Q = torch.min(q1,q2).cpu()
-                actor_loss = (alpha * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
+                actor_loss = (alpha.detach() * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
                 
             else:
                 
@@ -256,6 +257,7 @@ class Agent():
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
                 
+
                 q1 = self.critic1(states, actions_pred.squeeze(0))   
                 q2 = self.critic2(states, actions_pred.squeeze(0))
                 min_Q = torch.min(q1,q2).cpu()
@@ -339,12 +341,12 @@ class Agent():
                 alpha = torch.exp(self.log_alpha)
                 # Compute alpha loss
                 actions_pred, log_pis = self.actor_local.evaluate(states)
-                alpha_loss = - (self.log_alpha.cpu() * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = - (alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
                 
-                self.alpha = alpha
+                self.alpha = alpha.detach()
                 # Compute actor loss
                 if self._action_prior == "normal":
                     policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
@@ -355,7 +357,7 @@ class Agent():
                 q1 = self.critic1(states, actions_pred.squeeze(0))   
                 q2 = self.critic2(states, actions_pred.squeeze(0))
                 min_Q = torch.min(q1,q2).cpu()
-                actor_loss = ((alpha * log_pis.cpu() - min_Q - policy_prior_log_probs )*weights).mean()
+                actor_loss = ((alpha.detach() * log_pis.cpu() - min_Q - policy_prior_log_probs )*weights).mean()
 
                 # Minimize the loss
                 self.actor_optimizer.zero_grad()
@@ -459,12 +461,12 @@ class Agent():
                 alpha = torch.exp(self.log_alpha)
                 # Compute alpha loss
                 actions_pred, log_pis = self.actor_local.evaluate(states)
-                alpha_loss = - (self.log_alpha.cpu() * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = - (alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
                 
-                self.alpha = alpha
+                self.alpha = alpha.detach()
                 # Compute actor loss
                 if self._action_prior == "normal":
                     policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
@@ -475,7 +477,7 @@ class Agent():
                 q1 = self.critic1.get_qvalues(states, actions_pred.squeeze(0))   
                 q2 = self.critic2.get_qvalues(states, actions_pred.squeeze(0))
                 min_Q = torch.min(q1,q2).cpu()
-                actor_loss = (alpha * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
+                actor_loss = (alpha.detach() * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
                 
             else:
                 

@@ -114,7 +114,7 @@ parser.add_argument("-ere", type=int, default=0, choices=[0,1], help="Adding Emp
 parser.add_argument("-n_step", type=int, default=1, help="Using n-step bootstrapping, default=1")
 parser.add_argument("-info", type=str, help="Information or name of the run")
 parser.add_argument("-d2rl", type=int, choices=[0,1], default=0, help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
-parser.add_argument("-frames", type=int, default=200000, help="The amount of training interactions with the environment, default is 100000")
+parser.add_argument("-frames", type=int, default=200_000, help="The amount of training interactions with the environment, default is 100000")
 parser.add_argument("-eval_every", type=int, default=1000, help="Number of interactions after which the evaluation runs are performed, default = 1000")
 parser.add_argument("-eval_runs", type=int, default=3, help="Number of evaluation runs performed, default = 1")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
