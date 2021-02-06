@@ -14,25 +14,10 @@ class Agent():
     def __init__(self,
                         state_size,
                         action_size,
-                        per,
-                        ere,
-                        n_step,
-                        munchausen,
-                        distributional,
-                        D2RL,
-                        random_seed,
-                        hidden_size,
-                        BATCH_SIZE,
-                        BUFFER_SIZE,
-                        GAMMA,
-                        FIXED_ALPHA,
-                        lr_c,
-                        lr_a,
-                        tau,
-                        worker,
+                        args,
                         device,
                         action_prior="uniform",
-                        frames=1000000):
+                ):
         """Initialize an Agent object.
         
         Params
@@ -43,39 +28,42 @@ class Agent():
         """
         self.state_size = state_size
         self.action_size = action_size
-        self.seed = random.seed(random_seed)
-        self.seed_t = torch.manual_seed(random_seed)
+        random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        random_seed = args.seed
         self.device = device
-        self.per = per
-        self.ere = ere
-        self.n_step = n_step
-        self.munchausen = munchausen
-        self.distributional = distributional
+        self.per = args.per
+        self.ere = args.ere
+        self.n_step = args.n_step
+        self.munchausen = args.munchausen
+        self.distributional = args.distributional
         self.N = 32
-        self.D2RL = D2RL
+        self.D2RL = args.d2rl
         self.m_alpha = 0.9
         self.m_tau = 0.03
         self.lo = -1
-        self.BATCH_SIZE = BATCH_SIZE
-        self.BUFFER_SIZE = BUFFER_SIZE
-        self.GAMMA = GAMMA
-        self.worker = worker
-        self.tau = tau
+        self.batch_size = args.batch_size
+        self.n_updates = args.n_updates
+        self.buffer_size = int(args.replay_memory)
+        self.gamma = args.gamma
+        self.worker = args.worker
+        self.tau = args.tau
+        hidden_size = args.layer_size
 
         self.target_entropy = -action_size  # -dim(A)
 
-        self.FIXED_ALPHA = FIXED_ALPHA
+        self.FIXED_ALPHA = args.alpha
         self.log_alpha = torch.tensor([0.0], requires_grad=True)
         self.alpha = self.log_alpha.exp().detach()
-        self.alpha_optimizer = optim.Adam(params=[self.log_alpha], lr=lr_a) 
-        self._action_prior = action_prior
+        self.alpha_optimizer = optim.Adam(params=[self.log_alpha], lr=args.lr_a) 
+        self._action_prior = "uniform"
         
         # Actor Network 
         if self.D2RL:
             self.actor_local = DeepActor(state_size, action_size, random_seed, device, hidden_size).to(device)
         else:
             self.actor_local = Actor(state_size, action_size, random_seed, device, hidden_size).to(device)
-        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=lr_a)     
+        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=args.lr_a)     
         
         # Critic Network (w/ Target Network)
         if self.distributional:
@@ -118,18 +106,33 @@ class Agent():
                 self.critic2_target = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
                 self.critic2_target.load_state_dict(self.critic2.state_dict())
 
-        self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=lr_c, weight_decay=0)
-        self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=lr_c, weight_decay=0) 
+        self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=args.lr_c, weight_decay=0)
+        self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=args.lr_c, weight_decay=0) 
         print(self.actor_local)
         print(self.critic1)
 
         # Replay memory
         if self.per == 1:
-            self.memory = PrioritizedReplay(BUFFER_SIZE, self.BATCH_SIZE, self.device,  seed=random_seed, gamma=self.GAMMA, ere=ere,n_step=n_step, parallel_env=worker, beta_frames=frames)
+            self.memory = PrioritizedReplay(self.buffer_size,
+                                            self.batch_size,
+                                            self.device, 
+                                            seed=random_seed,
+                                            gamma=self.gamma,
+                                            ere=self.ere,
+                                            n_step=self.n_step,
+                                            parallel_env=self.worker,
+                                            beta_frames=args.frames)
             self.learn = self.learn_per
         else:
             self.per = 0
-            self.memory = ReplayBuffer(BUFFER_SIZE, self.BATCH_SIZE, self.device, random_seed, self.GAMMA, n_step=n_step, parallel_env=worker, ere=ere)
+            self.memory = ReplayBuffer(self.buffer_size,
+                                       self.batch_size,
+                                       self.device,
+                                       random_seed,
+                                       self.gamma,
+                                       n_step=self.n_step,
+                                       parallel_env=self.worker,
+                                       ere=self.ere)
             if self.distributional:
                 self.learn = self.learn_distr
             else:
@@ -146,15 +149,15 @@ class Agent():
         self.memory.add(state, action, reward, next_state, done)
         if ERE == False:
             # Learn, if enough samples are available in memory
-            if len(self.memory) > self.BATCH_SIZE:
-                experiences = self.memory.sample()
-
-                self.learn(step, experiences, self.GAMMA)
+            for _ in range(self.n_updates):
+                if len(self.memory) > self.batch_size:
+                    experiences = self.memory.sample()
+                    self.learn(step, experiences, self.gamma)
 
     def ere_step(self, c_k):
         # Learn, if enough samples are available in memory
         experiences = self.memory.sample(c_k)
-        self.learn(1, experiences, self.GAMMA)
+        self.learn(1, experiences, self.gamma)
             
     
     def act(self, state, eval=False):
@@ -219,9 +222,9 @@ class Agent():
                 std = log_std_m.exp()
                 dist = Normal(mu_m, std)
                 log_pi_a = self.m_tau*dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
-                assert log_pi_a.shape == (self.BATCH_SIZE, 1)
+                assert log_pi_a.shape == (self.batch_size, 1)
                 munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(log_pi_a, min=self.lo, max=0))
-                assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
+                assert munchausen_reward.shape == (self.batch_size, 1)
                 if self.FIXED_ALPHA == None:
                     # Compute Q targets for current states (y_i)
                     Q_targets = munchausen_reward + (gamma**self.n_step * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
@@ -282,7 +285,8 @@ class Agent():
                 gamma (float): discount factor
             """
             states, actions, rewards, next_states, dones, idx, weights = experiences
-
+            print(states.shape)
+            print(actions.shape)
             # ---------------------------- update critic ---------------------------- #
             # Get predicted next-state actions and Q values from target models
             with torch.no_grad():
@@ -302,9 +306,9 @@ class Agent():
                     std = log_std_m.exp()
                     dist = Normal(mu_m, std)
                     log_pi_a = dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
-                    assert log_pi_a.shape == (self.BATCH_SIZE, 1)
+                    assert log_pi_a.shape == (self.batch_size, 1)
                     munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(self.m_tau*log_pi_a, min=self.lo, max=0))
-                    assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
+                    assert munchausen_reward.shape == (self.batch_size, 1)
                     if self.FIXED_ALPHA == None:
                         # Compute Q targets for current states (y_i)
                         Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu()))
@@ -400,9 +404,9 @@ class Agent():
                 std = log_std_m.exp()
                 dist = Normal(mu_m, std)
                 log_pi_a = self.m_tau*dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
-                assert log_pi_a.shape == (self.BATCH_SIZE, 1)
+                assert log_pi_a.shape == (self.batch_size, 1)
                 munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(log_pi_a, min=self.lo, max=0)).unsqueeze(-1)
-                assert munchausen_reward.shape == (self.BATCH_SIZE, 1, 1)
+                assert munchausen_reward.shape == (self.batch_size, 1, 1)
                 if self.FIXED_ALPHA == None:
                     # Compute Q targets for current states (y_i)
                     Q_targets = munchausen_reward + (gamma * (1 - dones.cpu().unsqueeze(-1)) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu().unsqueeze(-1))) 
@@ -412,14 +416,14 @@ class Agent():
         # Compute critic loss
         Q_1, taus1 = self.critic1(states, actions, self.N)
         Q_2, taus2 = self.critic2(states, actions, self.N)
-        assert Q_targets.shape == (self.BATCH_SIZE, 1, self.N), "have shape: {}".format(Q_targets.shape)
-        assert Q_1.shape == (self.BATCH_SIZE, self.N, 1)
+        assert Q_targets.shape == (self.batch_size, 1, self.N), "have shape: {}".format(Q_targets.shape)
+        assert Q_1.shape == (self.batch_size, self.N, 1)
 
         # Quantile Huber loss
         td_error1 = Q_targets - Q_1.cpu()
         td_error2 = Q_targets - Q_2.cpu()
 
-        assert td_error1.shape == (self.BATCH_SIZE, self.N, self.N), "wrong td error shape"
+        assert td_error1.shape == (self.batch_size, self.N, self.N), "wrong td error shape"
         huber_l_1 = calculate_huber_loss(td_error1, 1.0)
         huber_l_2 = calculate_huber_loss(td_error2, 1.0)
         

@@ -1,8 +1,8 @@
 import numpy as np
 import random
 import gym
-import pybulletgym
-import pybullet_envs
+import pybulletgym # to run e.g. HalfCheetahPyBullet-v0 
+import pybullet_envs # to run e.g. HalfCheetahBullet-v0 different reward function bullet-v0 starts ~ -1500. pybullet-v0 starts at 0
 from collections import deque
 import torch
 import time
@@ -45,7 +45,7 @@ def evaluate(frame, eval_runs=5, capture=False, render=False):
 
 
 
-def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
+def run(args):
     """Deep Q-Learning.
     
     Params
@@ -60,7 +60,12 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
     state = envs.reset()
-    score = 0    
+    score = 0
+    frames = args.frames//args.worker
+    eval_every = args.eval_every//args.worker
+    eval_runs = args.eval_runs
+    worker = args.worker
+    ERE = args.ere
     if ERE:
         episode_K = 0
         eta_0 = 0.996
@@ -107,7 +112,7 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
 
 
 parser = argparse.ArgumentParser(description="")
-parser.add_argument("-env", type=str,default="HalfCheetahBulletEnv-v0", help="Environment name, default = Pendulum-v0")
+parser.add_argument("-env", type=str,default="HalfCheetahBulletEnv-v0", help="Environment name, default = HalfCheetahBulletEnv-v0")
 parser.add_argument("-per", type=int, default=0, choices=[0,1], help="Adding Priorizied Experience Replay to the agent if set to 1, default = 0")
 parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Adding Munchausen RL to the agent if set to 1, default = 0")
 parser.add_argument("-dist", "--distributional", type=int, default=0, choices=[0,1], help="Using a distributional IQN Critic if set to 1, default=0")
@@ -115,10 +120,11 @@ parser.add_argument("-ere", type=int, default=0, choices=[0,1], help="Adding Emp
 parser.add_argument("-n_step", type=int, default=1, help="Using n-step bootstrapping, default=1")
 parser.add_argument("-info", type=str, help="Information or name of the run")
 parser.add_argument("-d2rl", type=int, choices=[0,1], default=0, help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
-parser.add_argument("-frames", type=int, default=200_000, help="The amount of training interactions with the environment, default is 100000")
+parser.add_argument("-frames", type=int, default=1_000_000, help="The amount of training interactions with the environment, default is 1mio")
 parser.add_argument("-eval_every", type=int, default=1000, help="Number of interactions after which the evaluation runs are performed, default = 1000")
 parser.add_argument("-eval_runs", type=int, default=3, help="Number of evaluation runs performed, default = 1")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
+parser.add_argument("--n_updates", type=int, default=1, help="Update-to-Data (UTD) ratio, updates taken per step with the environment, default=1")
 parser.add_argument("-lr_a", type=float, default=3e-4, help="Actor learning rate of adapting the network weights, default is 3e-4")
 parser.add_argument("-lr_c", type=float, default=3e-4, help="Critic learning rate of adapting the network weights, default is 3e-4")
 parser.add_argument("-a", "--alpha", type=float, help="entropy alpha value, if not choosen the value is leaned by the agent")
@@ -132,30 +138,16 @@ parser.add_argument("-w", "--worker", type=int, default=1, help="Number of paral
 parser.add_argument("--render_evals", type=int, default=0, choices=[0,1], help="Rendering the evaluation runs if set to 1, default=0")
 args = parser.parse_args()
 
+
 if __name__ == "__main__":
-    env_name = args.env
-    seed = args.seed
-    frames = args.frames
-    worker = args.worker
-    GAMMA = args.gamma
-    TAU = args.tau
-    HIDDEN_SIZE = args.layer_size
-    BUFFER_SIZE = int(args.replay_memory)
-    BATCH_SIZE = args.batch_size * worker
-    LR_ACTOR = args.lr_a         # learning rate of the actor 
-    LR_CRITIC = args.lr_c        # learning rate of the critic
-    FIXED_ALPHA = args.alpha
-    saved_model = args.saved_model
-    ERE = args.ere
-    D2RL = args.d2rl
 
     writer = SummaryWriter("runs/"+args.info)
     envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     eval_env = gym.make(args.env)
-    envs.seed(seed)
-    eval_env.seed(seed+1)
-    torch.manual_seed(seed)
-    np.random.seed(seed)
+    envs.seed(args.seed)
+    eval_env.seed(args.seed+1)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Using device: {}".format(device))
@@ -164,19 +156,14 @@ if __name__ == "__main__":
     action_low = eval_env.action_space.low[0]
     state_size = eval_env.observation_space.shape[0]
     action_size = eval_env.action_space.shape[0]
-    agent = Agent(state_size=state_size, action_size=action_size, per=args.per, ere=args.ere, n_step=args.n_step, munchausen=args.munchausen, distributional=args.distributional,
-                 D2RL=D2RL, random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
-                 FIXED_ALPHA=FIXED_ALPHA, lr_a=LR_ACTOR, lr_c=LR_CRITIC, tau=TAU, worker=worker, device=device,  action_prior="uniform", frames=frames) #"normal"
+    agent = Agent(state_size=state_size, action_size=action_size, args=args, device=device) 
     
     t0 = time.time()
-    if saved_model != None:
-        agent.actor_local.load_state_dict(torch.load(saved_model))
+    if args.saved_model != None:
+        agent.actor_local.load_state_dict(torch.load(args.saved_model))
         evaluate(frame=None, capture=False)
     else:    
-        run(frames = args.frames//args.worker,
-            eval_every=args.eval_every//args.worker,
-            eval_runs=args.eval_runs,
-            worker=args.worker)
+        run(args)
     t1 = time.time()
     eval_env.close()
     timer(t0, t1)
