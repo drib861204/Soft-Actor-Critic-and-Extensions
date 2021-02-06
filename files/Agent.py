@@ -66,7 +66,7 @@ class Agent():
 
         self.FIXED_ALPHA = FIXED_ALPHA
         self.log_alpha = torch.tensor([0.0], requires_grad=True)
-        self.alpha = self.log_alpha.exp()
+        self.alpha = self.log_alpha.exp().detach()
         self.alpha_optimizer = optim.Adam(params=[self.log_alpha], lr=lr_a) 
         self._action_prior = action_prior
         
@@ -246,17 +246,17 @@ class Agent():
         if step % d == 0:
         # ---------------------------- update actor ---------------------------- #
             if self.FIXED_ALPHA == None:
-                actor_loss, log_pis = self.calc_policy_loss(states, self.alpha.detach())
+                actor_loss, log_pis = self.calc_policy_loss(states, self.alpha)
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
                 self.actor_optimizer.step()
                 
                 # Compute alpha loss
-                alpha_loss = - (self.alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = - (self.log_alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
-                self.alpha = self.log_alpha.exp()
+                self.alpha = self.log_alpha.exp().detach()
 
             else:
                 actor_loss, _ = self.calc_policy_loss(states, self.FIXED_ALPHA)
@@ -334,17 +334,17 @@ class Agent():
             self.memory.update_priorities(idx, prios.data.cpu().numpy())
             if step % d == 0:
             # ---------------------------- update actor ---------------------------- #
-                actor_loss, log_pis = self.calc_policy_loss(states, self.alpha.detach(), weights=weights)
+                actor_loss, log_pis = self.calc_policy_loss(states, self.alpha, weights=weights)
                 # Minimize the loss
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
                 self.actor_optimizer.step()
                 
-                alpha_loss = - (self.alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = - (self.log_alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
-                self.alpha = self.log_alpha.exp()
+                self.alpha = self.log_alpha.exp().detach()
 
                 # ----------------------- update target networks ----------------------- #
                 self.soft_update(self.critic1, self.critic1_target)
@@ -443,7 +443,7 @@ class Agent():
                 alpha = torch.exp(self.log_alpha)
                 # Compute alpha loss
                 actions_pred, log_pis = self.actor_local.evaluate(states)
-                alpha_loss = - (alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = - (self.log_alpha * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
