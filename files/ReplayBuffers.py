@@ -177,7 +177,6 @@ class PrioritizedReplay(object):
             if c_k > N:
                 c_k = N
                 
-
             if N == self.capacity:
                 prios = np.array(self.priorities)
             else:
