@@ -69,7 +69,7 @@ class Agent():
         if self.distributional:
             if self.D2RL:
                 self.critic1 = DeepIQN(state_size, action_size, hidden_size, random_seed, self.N, device).to(device)
-                self.critic2 = DeepIQN(state_size, action_size, hidden_size, random_seed, self.N,  device).to(device)
+                self.critic2 = DeepIQN(state_size, action_size, hidden_size, random_seed+1, self.N,  device).to(device)
                 
                 self.critic1_target = DeepIQN(state_size, action_size, hidden_size, random_seed, self.N, device).to(device)
                 self.critic1_target.load_state_dict(self.critic1.state_dict())
@@ -78,7 +78,7 @@ class Agent():
                 self.critic2_target.load_state_dict(self.critic2.state_dict())
             else:
                 self.critic1 = IQN(state_size, action_size, hidden_size, random_seed, self.N, device).to(device)
-                self.critic2 = IQN(state_size, action_size, hidden_size, random_seed, self.N, device).to(device)
+                self.critic2 = IQN(state_size, action_size, hidden_size, random_seed+1, self.N, device).to(device)
                 
                 self.critic1_target = IQN(state_size, action_size, hidden_size, random_seed, self.N, device).to(device)
                 self.critic1_target.load_state_dict(self.critic1.state_dict())
@@ -89,7 +89,7 @@ class Agent():
 
             if self.D2RL:
                 self.critic1 = DeepCritic(state_size, action_size, random_seed, device, hidden_size).to(device)
-                self.critic2 = DeepCritic(state_size, action_size, random_seed, device, hidden_size).to(device)
+                self.critic2 = DeepCritic(state_size, action_size, random_seed+1, device, hidden_size).to(device)
                 
                 self.critic1_target = DeepCritic(state_size, action_size, random_seed, device, hidden_size).to(device)
                 self.critic1_target.load_state_dict(self.critic1.state_dict())
@@ -98,7 +98,7 @@ class Agent():
                 self.critic2_target.load_state_dict(self.critic2.state_dict())
             else:
                 self.critic1 = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
-                self.critic2 = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
+                self.critic2 = Critic(state_size, action_size, random_seed+1, device, hidden_size).to(device)
                 
                 self.critic1_target = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
                 self.critic1_target.load_state_dict(self.critic1.state_dict())
