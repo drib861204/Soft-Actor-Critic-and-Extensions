@@ -51,13 +51,13 @@ To see the options:
 -eval_every, Number of interactions after which the evaluation runs are performed, default = 5000
 -eval_runs, Number of evaluation runs performed, default = 1
 -seed, Seed for the env and torch network weights, default is 0
--lr_a, Actor learning rate of adapting the network weights, default is 5e-4
--lr_c, Critic learning rate of adapting the network weights, default is 5e-4
+-lr_a, Actor learning rate of adapting the network weights, default is 3e-4
+-lr_c, Critic learning rate of adapting the network weights, default is 3e-4
 -a, --alpha, entropy alpha value, if not choosen the value is leaned by the agent
 -layer_size, Number of nodes per neural network layer, default is 256
 -repm, --replay_memory, Size of the Replay memory, default is 1e6
 -bs, --batch_size, Batch size, default is 256
--t, --tau, Softupdate factor tau, default is 1e-2
+-t, --tau, Softupdate factor tau, default is 0.005
 -g, --gamma, discount factor gamma, default is 0.99
 --saved_model, Load a saved model to perform a test run!
 -w, --worker, Number of parallel worker (attention, batch-size increases proportional to worker number!), default = 1
@@ -86,6 +86,11 @@ It can be seen that the extensions not always bring improvements to the algorith
 ![LLC](imgs/SAC_LLC.jpg)
 
 - All runs without hyperparameter-tuning
+
+## PyBullet Environments
+![HalfCheetah](/imgs/HalfCheetahBulletEnv-v0.png)
+![Hopper](/imgs/HopperBulletEnv-v0.png)
+
 
 ## Comparison SAC and D2RL-SAC
 ![D2RL-Pendulum](imgs/Base_D2RL_SAC.png)
