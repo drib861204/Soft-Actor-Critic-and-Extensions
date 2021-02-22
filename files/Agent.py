@@ -322,8 +322,9 @@ class Agent():
             td_error2 = Q_targets-Q_2
             critic1_loss = 0.5* (td_error1.pow(2)*weights).mean()
             critic2_loss = 0.5* (td_error2.pow(2)*weights).mean()
-            prios = abs(((td_error1 + td_error2)/2.0 + 1e-5).squeeze())
-            
+            prios = abs((torch.min(td_error1, td_error2)+1e-5)).squeeze().detach()
+            #prios = abs((torch.cat((td_error1, td_error2)).mean(1) + 1e-5).squeeze()).detach()
+            #prios = abs(td_error1 + 1e-5).squeeze().detach()
             # Update critics
             # critic 1
             self.critic1_optimizer.zero_grad()
@@ -343,7 +344,7 @@ class Agent():
                 actor_loss.backward()
                 self.actor_optimizer.step()
                 
-                alpha_loss = - (self.log_alpha.exp() * (log_pis.cpu() + self.target_entropy).detach().cpu()).mean()
+                alpha_loss = (- (self.log_alpha.exp() * (log_pis.cpu() + self.target_entropy).detach().cpu())*weights).mean() 
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
