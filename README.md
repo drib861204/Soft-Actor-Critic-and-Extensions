@@ -89,7 +89,9 @@ It can be seen that the extensions not always bring improvements to the algorith
 
 ## PyBullet Environments
 ![HalfCheetah](/imgs/HalfCheetahBulletEnv-v0.png)
+![HalfCheetah](/imgs/HalfCheetahBulletEnv-v0-D2RL.png)
 ![Hopper](/imgs/HopperBulletEnv-v0.png)
+
 
 
 ## Comparison SAC and D2RL-SAC
