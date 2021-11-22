@@ -1,8 +1,8 @@
 import numpy as np
 import random
 import gym
-import pybulletgym # to run e.g. HalfCheetahPyBullet-v0 
-import pybullet_envs # to run e.g. HalfCheetahBullet-v0 different reward function bullet-v0 starts ~ -1500. pybullet-v0 starts at 0
+#import pybulletgym # to run e.g. HalfCheetahPyBullet-v0
+#import pybullet_envs # to run e.g. HalfCheetahBullet-v0 different reward function bullet-v0 starts ~ -1500. pybullet-v0 starts at 0
 from collections import deque
 import torch
 import time
@@ -26,13 +26,16 @@ def evaluate(frame, eval_runs=5, capture=False, render=False):
 
     reward_batch = []
     for i in range(eval_runs):
-        if render:
-            print(render) 
-            eval_env.render(mode="human")
+
         state = eval_env.reset()
 
         rewards = 0
         while True:
+
+            if render:
+                # print("render")
+                eval_env.render(mode="human")
+
             action = agent.act(np.expand_dims(state, axis=0), eval=True)
             action_v = np.clip(action, action_low, action_high)
             state, reward, done, _ = eval_env.step(action_v[0])
@@ -76,6 +79,7 @@ def run(args):
 
     for frame in range(1, frames+1):
         # evaluation runs
+
         if frame % eval_every == 0 or frame == 1:
             evaluate(frame*worker, eval_runs, render=args.render_evals)
 
@@ -136,12 +140,13 @@ parser.add_argument("-g", "--gamma", type=float, default=0.99, help="discount fa
 parser.add_argument("--saved_model", type=str, default=None, help="Load a saved model to perform a test run!")
 parser.add_argument("-w", "--worker", type=int, default=1, help="Number of parallel worker, default = 1")
 parser.add_argument("--render_evals", type=int, default=0, choices=[0,1], help="Rendering the evaluation runs if set to 1, default=0")
+parser.add_argument("--trial", type=int, default=0, help="trial")
 args = parser.parse_args()
 
 
 if __name__ == "__main__":
 
-    writer = SummaryWriter("runs/"+args.info)
+    writer = SummaryWriter("runs/"+args.info+str(args.trial))
     envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     eval_env = gym.make(args.env)
     envs.seed(args.seed)
@@ -174,3 +179,5 @@ if __name__ == "__main__":
     # save parameter
     with open('runs/'+args.info+".json", 'w') as f:
         json.dump(args.__dict__, f, indent=2)
+
+    writer.close()
