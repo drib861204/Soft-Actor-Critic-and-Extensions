@@ -28,8 +28,8 @@ def evaluate(frame, eval_runs=5, capture=False, render=False):
     for i in range(eval_runs):
 
         state = eval_env.reset()
-
         rewards = 0
+
         while True:
 
             if render:
