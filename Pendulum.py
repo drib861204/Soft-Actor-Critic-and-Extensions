@@ -46,6 +46,10 @@ class Pendulum:
             pygame.init()
             self.screen = pygame.display.set_mode((width, height))
             pygame.display.set_caption("Pendulum Simulation")
+            pygame.font.init()
+            self.debug_font = pygame.font.SysFont('Bauhuas 93', 30)
+            self.hint_font = pygame.font.SysFont('Bauhaus 93', 26)
+            print("font")
 
 
     def reset(self):
@@ -57,19 +61,27 @@ class Pendulum:
         return state
 
 
-    def render(self):
+    def render(self, action):
+        torque = action
+
         SCALE = 100
         BLACK = (0, 0, 0)
         WHITE = (255, 255, 255)
+        RED = (255, 0, 0)
+        GRAY = (128, 128, 128)
 
         tip_x = self.POS[0]+self.len_wheel*sin(self.theta_rod)*SCALE
         tip_y = self.POS[1]-self.len_wheel*cos(self.theta_rod)*SCALE
         POSTIP = np.array([tip_x, tip_y])
+        POSWHEEL = np.array(([tip_x+self.rad_wheel*sin(self.theta_wheel)*SCALE, tip_y+self.rad_wheel*cos(self.theta_wheel)*SCALE]))
         #print(POSTIP)
         self.screen.fill(WHITE)
-        pygame.draw.line(self.screen, BLACK, self.POS, POSTIP, 1)
+        pygame.draw.line(self.screen, BLACK, self.POS, POSTIP, 10)
+        pygame.draw.circle(self.screen, GRAY, POSTIP, self.rad_wheel*2*SCALE)
+        pygame.draw.circle(self.screen, RED, POSWHEEL, self.rad_wheel*2*SCALE//5)
+        img = self.hint_font.render(f"torque: {torque}", True, BLACK)
+        self.screen.blit(img, (self.origin_x, self.origin_y/2))
         pygame.display.update()
-
 
 
     def step(self, action):
@@ -120,7 +132,6 @@ class Pendulum:
     def close(self):
         pygame.display.quit()
         pygame.quit()
-
 
 
 def angle_normalize(th):

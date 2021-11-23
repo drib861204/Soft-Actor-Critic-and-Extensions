@@ -31,6 +31,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False):
         state = eval_env.reset()
         rewards = 0
         rep = 0
+        action_v = 0
 
         while True:
 
@@ -40,13 +41,13 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False):
             if rend:
                 #print("render")
                 # eval_env.render(mode="human")
-                eval_env.render()
+                eval_env.render(action_v)
 
             action = agent.act(np.expand_dims(state, axis=0), eval=True)
             action_v = np.clip(action, action_low, action_high)
             state, reward, done, _ = eval_env.step(action_v[0])
             rewards += reward
-            if done or rep >= 10000:
+            if done or rep >= 100000:
                 break
             rep += 1
         reward_batch.append(rewards)
