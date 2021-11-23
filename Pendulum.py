@@ -53,11 +53,12 @@ class Pendulum:
 
 
     def reset(self):
-        self.theta_rod = np.random.random()*40*pi/180-20*pi/180
-        self.theta_wheel = 0
+        roll_range = 20 #in degree
+        self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
+        #self.theta_wheel = 0
         self.theta_rod_dot = 0
         self.theta_wheel_dot = 0
-        state = np.array([self.theta_rod, self.theta_wheel, self.theta_rod_dot, self.theta_wheel_dot], dtype=np.float32)
+        state = np.array([self.theta_rod, self.theta_rod_dot, self.theta_wheel_dot], dtype=np.float32)
         return state
 
 
