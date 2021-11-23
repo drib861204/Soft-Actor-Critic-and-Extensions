@@ -197,10 +197,10 @@ if __name__ == "__main__":
     timer(t0, t1)
 
     # save policy
-    torch.save(agent.actor_local.state_dict(), 'runs/'+args.info+".pth")
+    torch.save(agent.actor_local.state_dict(), 'runs/{}{}/'.format(args.info,args.trial)+args.info+str(args.trial)+".pth")
 
     # save parameter
-    with open('runs/'+args.info+".json", 'w') as f:
+    with open('runs/{}{}/'.format(args.info,args.trial)+args.info+str(args.trial)+".json", 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
     writer.close()
