@@ -7,7 +7,7 @@
   "n_step": 1,
   "info": "rwip",
   "d2rl": 0,
-  "frames": 500,
+  "frames": 100000,
   "eval_every": 1000,
   "eval_runs": 3,
   "seed": 0,
@@ -23,5 +23,5 @@
   "saved_model": null,
   "worker": 1,
   "render_evals": 0,
-  "trial": 5
+  "trial": 7
 }

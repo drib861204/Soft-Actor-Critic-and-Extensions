@@ -31,7 +31,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False):
         state = eval_env.reset()
         rewards = 0
         rep = 0
-        action_v = 0
+        #action_v = 0
 
         while True:
 
@@ -41,13 +41,13 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False):
             if rend:
                 #print("render")
                 # eval_env.render(mode="human")
-                eval_env.render(action_v)
+                eval_env.render()
 
             action = agent.act(np.expand_dims(state, axis=0), eval=True)
             action_v = np.clip(action, action_low, action_high)
             state, reward, done, _ = eval_env.step(action_v[0])
             rewards += reward
-            if done or rep >= 100000:
+            if done or rep >= 10000:
                 break
             rep += 1
         reward_batch.append(rewards)
@@ -136,9 +136,9 @@ parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Add
 parser.add_argument("-dist", "--distributional", type=int, default=0, choices=[0,1], help="Using a distributional IQN Critic if set to 1, default=0")
 parser.add_argument("-ere", type=int, default=0, choices=[0,1], help="Adding Emphasizing Recent Experience to the agent if set to 1, default = 0")
 parser.add_argument("-n_step", type=int, default=1, help="Using n-step bootstrapping, default=1")
-parser.add_argument("-info", type=str, help="Information or name of the run")
+parser.add_argument("-info", type=str, default="rwip", help="Information or name of the run")
 parser.add_argument("-d2rl", type=int, choices=[0,1], default=0, help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
-parser.add_argument("-frames", type=int, default=1_000_000, help="The amount of training interactions with the environment, default is 1mio")
+parser.add_argument("-frames", type=int, default=100000, help="The amount of training interactions with the environment, default is 1mio")
 parser.add_argument("-eval_every", type=int, default=1000, help="Number of interactions after which the evaluation runs are performed, default = 1000")
 parser.add_argument("-eval_runs", type=int, default=3, help="Number of evaluation runs performed, default = 1")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
@@ -180,9 +180,9 @@ if __name__ == "__main__":
     state_size = eval_env.observation_space.shape[0]
     action_size = eval_env.action_space.shape[0]
     '''
-    action_high = 2
-    action_low = -2
-    state_size = 4
+    action_high = 1
+    action_low = -1
+    state_size = 3
     action_size = 1
 
     agent = Agent(state_size=state_size, action_size=action_size, args=args, device=device) 
@@ -193,15 +193,15 @@ if __name__ == "__main__":
         evaluate(frame=None, capture=False, rend=args.render_evals)
     else:    
         run(args)
-    t1 = time.time()
+        t1 = time.time()
+        timer(t0, t1)
+
+        # save policy
+        torch.save(agent.actor_local.state_dict(), 'runs/{}{}/'.format(args.info,args.trial)+args.info+str(args.trial)+".pth")
+
+        # save parameter
+        with open('runs/{}{}/'.format(args.info,args.trial)+args.info+str(args.trial)+".json", 'w') as f:
+            json.dump(args.__dict__, f, indent=2)
+
     eval_env.close()
-    timer(t0, t1)
-
-    # save policy
-    torch.save(agent.actor_local.state_dict(), 'runs/{}{}/'.format(args.info,args.trial)+args.info+str(args.trial)+".pth")
-
-    # save parameter
-    with open('runs/{}{}/'.format(args.info,args.trial)+args.info+str(args.trial)+".json", 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
-
     writer.close()
