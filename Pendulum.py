@@ -63,7 +63,7 @@ class Pendulum:
         return state
 
 
-    def render(self):
+    def render(self, eval_run):
         #torque = action
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -87,8 +87,10 @@ class Pendulum:
         pygame.draw.circle(self.screen, RED, POSWHEEL, self.rad_wheel*2*SCALE//5)
         img = self.hint_font.render("torque  : % .4f" %self.torque, True, BLACK)
         img2 = self.hint_font.render("voltage: % .4f" %self.voltage, True, BLACK)
+        img3 = self.hint_font.render("Evaluation Run %d" %eval_run, True, BLACK)
         self.screen.blit(img, (self.origin_x, self.origin_y/2-50))
         self.screen.blit(img2, (self.origin_x, self.origin_y/2-30))
+        self.screen.blit(img3, (self.origin_x/5, self.origin_y/2-50))
 
         pygame.display.update()
 

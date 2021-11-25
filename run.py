@@ -44,7 +44,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             if rend:
                 #print("render")
                 # eval_env.render(mode="human")
-                eval_env.render()
+                eval_env.render(i+1)
 
             action = agent.act(np.expand_dims(state, axis=0), eval=True)
             action_v = np.clip(action, action_low, action_high)
