@@ -143,7 +143,7 @@ class Pendulum:
         self.torque = torque
         self.voltage = voltage
 
-        costs = 100 * angle_normalize(q1)**2 + 0.1 * q1_dot**2 + 0.001 * voltage**2
+        costs = 100 * angle_normalize(q1)**2 + 0.1 * q1_dot**2 + 0.001 * voltage**2 + 0.001 * q2_dot**2
 
         return state, -costs, False, {}
 
