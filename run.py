@@ -20,7 +20,7 @@ def timer(start,end):
     print("\nTraining Time:  {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
 
 
-def evaluate(frame, eval_runs=5, capture=False, rend=False):
+def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
     """
     Makes an evaluation run with the current episode
     """
@@ -31,6 +31,9 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False):
         state = eval_env.reset()
         rewards = 0
         rep = 0
+        rep_max = 200
+        if savedmodel:
+            rep_max = 10000
         #action_v = 0
 
         while True:
@@ -47,7 +50,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False):
             action_v = np.clip(action, action_low, action_high)
             state, reward, done, _ = eval_env.step(action_v[0])
             rewards += reward
-            if done or rep >= 10000:
+            if done or rep >= rep_max:
                 break
             rep += 1
         reward_batch.append(rewards)
@@ -190,7 +193,7 @@ if __name__ == "__main__":
     t0 = time.time()
     if args.saved_model != None:
         agent.actor_local.load_state_dict(torch.load(args.saved_model))
-        evaluate(frame=None, capture=False, rend=args.render_evals)
+        evaluate(frame=None, capture=False, rend=args.render_evals, savedmodel=True)
     else:    
         run(args)
         t1 = time.time()

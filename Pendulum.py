@@ -85,8 +85,8 @@ class Pendulum:
         pygame.draw.line(self.screen, BLACK, self.POS, POSTIP, 10)
         pygame.draw.circle(self.screen, GRAY, POSTIP, self.rad_wheel*2*SCALE)
         pygame.draw.circle(self.screen, RED, POSWHEEL, self.rad_wheel*2*SCALE//5)
-        img = self.hint_font.render(f"torque: {self.torque}", True, BLACK)
-        img2 = self.hint_font.render(f"voltage: {self.voltage}", True, BLACK)
+        img = self.hint_font.render("torque  : % .4f" %self.torque, True, BLACK)
+        img2 = self.hint_font.render("voltage: % .4f" %self.voltage, True, BLACK)
         self.screen.blit(img, (self.origin_x, self.origin_y/2-50))
         self.screen.blit(img2, (self.origin_x, self.origin_y/2-30))
 
