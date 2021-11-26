@@ -55,11 +55,16 @@ class Pendulum:
 
     def reset(self):
         roll_range = 20 #in degree
-        self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
+        #self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
+        self.theta_rod = pi/18
         #self.theta_wheel = 0
         self.theta_rod_dot = 0
         self.theta_wheel_dot = 0
-        state = np.array([self.theta_rod, self.theta_rod_dot, self.theta_wheel_dot], dtype=np.float32)
+
+        self.momentum_rod = self.mass_rod*self.len_rod**2/12 + (np.random.random()*2-1)*0.0002
+
+        #state = np.array([self.theta_rod, self.theta_rod_dot, self.theta_wheel_dot], dtype=np.float32)
+        state = np.array([self.theta_rod, self.theta_rod_dot, self.theta_wheel_dot, self.momentum_rod], dtype=np.float32)
         return state
 
 
@@ -88,9 +93,11 @@ class Pendulum:
         img = self.hint_font.render("torque  : % .4f" %self.torque, True, BLACK)
         img2 = self.hint_font.render("voltage: % .4f" %self.voltage, True, BLACK)
         img3 = self.hint_font.render("Evaluation Run %d" %eval_run, True, BLACK)
+        img4 = self.hint_font.render("I1  : % .4f" %self.momentum_rod, True, BLACK)
         self.screen.blit(img, (self.origin_x, self.origin_y/2-50))
         self.screen.blit(img2, (self.origin_x, self.origin_y/2-30))
         self.screen.blit(img3, (self.origin_x/5, self.origin_y/2-50))
+        self.screen.blit(img4, (self.origin_x/5, self.origin_y/2-70))
 
         pygame.display.update()
 
@@ -137,7 +144,11 @@ class Pendulum:
         #print("torque",torque)
         #print("\n")
         #print([torque, newq1[0], newq2[0], newq1_dot[0], newq2_dot[0]])
-        state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
+        #state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
+
+
+        state = np.array([newq1[0], newq1_dot[0], newq2_dot[0], I1], dtype=np.float32)
+
         self.theta_rod = newq1
         self.theta_wheel = newq2
         self.theta_rod_dot = newq1_dot
@@ -145,7 +156,7 @@ class Pendulum:
         self.torque = torque
         self.voltage = voltage
 
-        costs = 100 * angle_normalize(q1)**2 + 0.1 * q1_dot**2 + 0.001 * voltage**2 + 0.001 * q2_dot**2
+        costs = 100 * angle_normalize(q1)**2 + 0.1 * q1_dot**2 + 0.001 * voltage**2
 
         return state, -costs, False, {}
 

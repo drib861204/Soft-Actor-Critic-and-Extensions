@@ -185,7 +185,7 @@ if __name__ == "__main__":
     '''
     action_high = 1
     action_low = -1
-    state_size = 3
+    state_size = 4
     action_size = 1
 
     agent = Agent(state_size=state_size, action_size=action_size, args=args, device=device) 
