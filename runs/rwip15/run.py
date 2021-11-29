@@ -1,6 +1,6 @@
 import numpy as np
 import random
-import gym
+#import gym
 #import pybulletgym # to run e.g. HalfCheetahPyBullet-v0
 #import pybullet_envs # to run e.g. HalfCheetahBullet-v0 different reward function bullet-v0 starts ~ -1500. pybullet-v0 starts at 0
 from collections import deque
