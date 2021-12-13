@@ -154,9 +154,9 @@ parser.add_argument("-repm", "--replay_memory", type=int, default=int(1e6), help
 parser.add_argument("-bs", "--batch_size", type=int, default=256, help="Batch size, default is 256")
 parser.add_argument("-t", "--tau", type=float, default=0.005, help="Softupdate factor tau, default is 0.005")
 parser.add_argument("-g", "--gamma", type=float, default=0.99, help="discount factor gamma, default is 0.99")
-parser.add_argument("--saved_model", type=str, default=None, help="Load a saved model to perform a test run!")
+parser.add_argument("-s", "--saved_model", type=str, default=None, help="Load a saved model to perform a test run!")
 parser.add_argument("-w", "--worker", type=int, default=1, help="Number of parallel worker, default = 1")
-parser.add_argument("--render_evals", type=int, default=0, choices=[0,1], help="Rendering the evaluation runs if set to 1, default=0")
+parser.add_argument("-r", "--render_evals", type=int, default=0, choices=[0,1], help="Rendering the evaluation runs if set to 1, default=0")
 parser.add_argument("--trial", type=int, default=0, help="trial")
 args = parser.parse_args()
 
