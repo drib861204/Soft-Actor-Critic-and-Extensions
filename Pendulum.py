@@ -64,10 +64,12 @@ class Pendulum:
         roll_range = 3 #in degree
         reset_max_speed = 3
 
-        self.theta_rod = np.random.uniform(low=-roll_range, high=roll_range)*pi/180
+        #self.theta_rod = np.random.uniform(low=-roll_range*pi/180, high=roll_range*pi/180)
+        self.theta_rod = roll_range*0.6*pi/180
+
+
         #print("\n",self.theta_rod)
         #self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
-        #self.theta_rod = roll_range*pi/180
         #self.theta_wheel = 0
         self.theta_rod_dot = 0
         #self.theta_rod_dot = (np.random.random() * 2 - 1) * reset_max_speed
