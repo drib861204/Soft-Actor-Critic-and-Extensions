@@ -18,22 +18,28 @@ import numpy as np
 
 
 class Pendulum:
-    def __init__(self, rend):
-        # paras according to paper [LQR and MPC controller design and comparison for a stationary self-balancing bicycle robot with a reaction wheel]
+    def __init__(self, rend, seed):
+        self.np_random = np.random.seed(seed)
+        #for i in range(10):
+        #    print(np.random.uniform(low=-3.5, high=3.5)*pi/180)
+
         self.theta_rod = 0
         self.theta_wheel = 0
         self.theta_rod_dot = 0
         self.theta_wheel_dot = 0
-        self.len_rod = 0.5
-        self.len_wheel = 0.5 #0.5, 0.75
-        self.rad_wheel = 0.2
-        self.mass_rod = 5
-        self.mass_wheel = 5
-        self.momentum_rod = self.mass_rod*self.len_rod**2/12
-        self.momentum_wheel = self.mass_wheel*self.rad_wheel**2 #depends on wheel shape
+        self.len_rod = 0.35
+        self.len_wheel = 0.2 #0.5, 0.75
+        self.mass_rod = 20
+        self.rad_out = 0.15
+        self.rad_in = 0.08
+        self.t = 0.02
+        self.rho = 7870
+        self.mass_wheel = (self.rad_out**2-self.rad_in**2)*pi*self.t*self.rho
+        self.momentum_rod = self.mass_rod*(2*self.len_rod)**2/33
+        self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
         self.dt = 0.001
-        self.gravity = 9.8
-        self.wheel_max_speed = 20
+        self.gravity = 9.81
+        self.wheel_max_speed = 30
         self.max_torque = 50
         self.torque = 0
         self.voltage = 0
@@ -55,10 +61,12 @@ class Pendulum:
 
 
     def reset(self):
-        roll_range = 5 #in degree
+        roll_range = 2 #in degree
         reset_max_speed = 3
 
-        self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
+        self.theta_rod = np.random.uniform(low=-roll_range, high=roll_range)*pi/180
+        #print("\n",self.theta_rod)
+        #self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
         #self.theta_rod = roll_range*pi/180
         #self.theta_wheel = 0
         self.theta_rod_dot = 0
@@ -84,12 +92,12 @@ class Pendulum:
         tip_x = self.POS[0]+self.len_wheel*sin(self.theta_rod)*SCALE
         tip_y = self.POS[1]-self.len_wheel*cos(self.theta_rod)*SCALE
         POSTIP = np.array([tip_x, tip_y])
-        POSWHEEL = np.array(([tip_x+self.rad_wheel*sin(self.theta_wheel)*SCALE/4, tip_y-self.rad_wheel*cos(self.theta_wheel)*SCALE/4]))
+        POSWHEEL = np.array(([tip_x+self.rad_out*sin(self.theta_wheel)*SCALE/4, tip_y-self.rad_out*cos(self.theta_wheel)*SCALE/4]))
         #print(POSTIP)
         self.screen.fill(WHITE)
         pygame.draw.line(self.screen, BLACK, self.POS, POSTIP, 10)
-        pygame.draw.circle(self.screen, GRAY, POSTIP, self.rad_wheel*2*SCALE/4)
-        pygame.draw.circle(self.screen, RED, POSWHEEL, self.rad_wheel*2*SCALE/5/4)
+        pygame.draw.circle(self.screen, GRAY, POSTIP, self.rad_out*2*SCALE/4)
+        pygame.draw.circle(self.screen, RED, POSWHEEL, self.rad_out*2*SCALE/5/4)
         img = self.hint_font.render("torque  : % .4f" %self.torque, True, BLACK)
         img2 = self.hint_font.render("voltage: % .4f" %self.voltage, True, BLACK)
         img3 = self.hint_font.render("Evaluation Run %d" %eval_run, True, BLACK)
@@ -113,11 +121,11 @@ class Pendulum:
         I2 = self.momentum_wheel
         dt = self.dt
         g = self.gravity
-        gear_ratio = 7 #25
-        kt = 3.85 #0.0229
-        ke = 0.34 #0.0229
-        R = 0.38 #0.71
-        action_scale = 48
+        gear_ratio = 25
+        kt = 0.0229
+        ke = 0.0229
+        R = 0.71
+        action_scale = 12
 
         #torque = action
         voltage = action * action_scale
@@ -155,7 +163,7 @@ class Pendulum:
         self.torque = torque
         self.voltage = voltage
 
-        costs = 100 * angle_normalize(q1)**2 + 0.1 * q1_dot**2 + 0.001 * voltage**2
+        costs = 1000 * angle_normalize(q1)**2 + 0.1 * q1_dot**2 + 0.001 * voltage**2
 
         return state, -costs, False, {}
 

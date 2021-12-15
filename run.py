@@ -33,7 +33,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         rep = 0
         rep_max = 200
         if savedmodel:
-            rep_max = 5000
+            rep_max = 10000
         #action_v = 0
 
         while True:
@@ -168,14 +168,14 @@ if __name__ == "__main__":
     #envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     #eval_env = gym.make(args.env)
 
-    envs = Pendulum(args.render_evals)
-    eval_env = Pendulum(args.render_evals)
-    '''
-    envs.seed(args.seed)
-    eval_env.seed(args.seed+1)
+    envs = Pendulum(args.render_evals, args.seed)
+    eval_env = Pendulum(args.render_evals, args.seed+1)
+
+    #envs.seed(args.seed)
+    #eval_env.seed(args.seed+1)
     torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    '''
+    #np.random.seed(args.seed)
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Using device: {}".format(device))
     '''
