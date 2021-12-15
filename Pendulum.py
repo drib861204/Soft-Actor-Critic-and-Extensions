@@ -61,7 +61,7 @@ class Pendulum:
 
 
     def reset(self):
-        roll_range = 2 #in degree
+        roll_range = 3 #in degree
         reset_max_speed = 3
 
         self.theta_rod = np.random.uniform(low=-roll_range, high=roll_range)*pi/180
