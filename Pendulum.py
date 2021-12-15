@@ -37,12 +37,16 @@ class Pendulum:
         self.mass_wheel = (self.rad_out**2-self.rad_in**2)*pi*self.t*self.rho
         self.momentum_rod = self.mass_rod*(2*self.len_rod)**2/33
         self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
-        self.dt = 0.001
+        self.dt = 0.0001
         self.gravity = 9.81
         self.wheel_max_speed = 30
         self.max_torque = 50
         self.torque = 0
         self.voltage = 0
+
+        #print(self.mass_wheel)
+        #print(self.momentum_rod)
+        #print(self.momentum_wheel)
 
         width = 800
         height = 600
@@ -65,7 +69,7 @@ class Pendulum:
         reset_max_speed = 3
 
         #self.theta_rod = np.random.uniform(low=-roll_range*pi/180, high=roll_range*pi/180)
-        self.theta_rod = roll_range*0.6*pi/180
+        self.theta_rod = roll_range*0.5*pi/180
 
 
         #print("\n",self.theta_rod)

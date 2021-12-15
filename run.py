@@ -12,6 +12,7 @@ from files import MultiPro
 from files.Agent import Agent
 import json
 from Pendulum import *  # added by Ben
+import matplotlib.pyplot as plt
 
 
 def timer(start, end):
@@ -27,14 +28,19 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
     """
 
     reward_batch = []
+
     for i in range(eval_runs):
+
+        state_action_log = np.zeros((1,4))
+        #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
+        #print(state_action_log)
 
         state = eval_env.reset()
         rewards = 0
         rep = 0
         rep_max = 200
         if savedmodel:
-            rep_max = 5000
+            rep_max = 50000
         # action_v = 0
 
         while True:
@@ -50,10 +56,32 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             action = agent.act(np.expand_dims(state, axis=0), eval=True)
             action_v = np.clip(action, action_low, action_high)
             state, reward, done, _ = eval_env.step(action_v[0])
+
+            #print(np.asmatrix(state))
+            #print(np.transpose(state))
+            state_action = np.append(state, action_v[0])
+            #print(state_action)
+            state_action_log = np.concatenate((state_action_log,np.asmatrix(state_action)),axis=0)
+            #print(state_action_log)
+            #print(rep)
+            #print(len(state_action_log))
+
             rewards += reward
             if done or rep >= rep_max:
                 break
             rep += 1
+
+        if savedmodel:
+            #print(np.shape(state_action_log)[0])
+            fig, axs = plt.subplots(3)
+            fig.suptitle('Titlee')
+            t = np.arange(0, 0.0001*np.shape(state_action_log)[0], 0.0001)
+            axs[0].plot(t[1:], state_action_log[1:,0])
+            axs[1].plot(t[1:], state_action_log[1:,2])
+            axs[2].plot(t[1:], state_action_log[1:,3]*12)
+            plt.show()
+
+
         reward_batch.append(rewards)
     if capture == False and savedmodel == False:
         writer.add_scalar("Reward", np.mean(reward_batch), frame)
