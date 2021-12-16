@@ -11,7 +11,7 @@ import argparse
 from  files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum import * # added by Ben
+from Pendulum23 import * # added by Ben
 
 def timer(start,end):
     """ Helper to print training time """
