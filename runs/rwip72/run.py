@@ -65,11 +65,11 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             action = agent.act(np.expand_dims(state_rev, axis=0), eval=True)
             action = np.clip(action, action_low, action_high)
 
-            #(action)
-            #print(state)
+            print(action)
+            print(state)
             if state[0] < 0:
                 action[0] = -action[0]
-            #print(action)
+            print(action)
             state, reward, done, _ = eval_env.step(action[0])
 
             #print(np.asmatrix(state))
@@ -90,7 +90,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             #print(np.shape(state_action_log)[0])
             fig, axs = plt.subplots(3)
             fig.suptitle('Titlee')
-            t = np.arange(0, 0.0005*np.shape(state_action_log)[0], 0.0005)
+            t = np.arange(0, 0.001*np.shape(state_action_log)[0], 0.001)
             axs[0].plot(t[1:], state_action_log[1:,0])
             axs[1].plot(t[1:], state_action_log[1:,2])
             axs[2].plot(t[1:], state_action_log[1:,3]*10)

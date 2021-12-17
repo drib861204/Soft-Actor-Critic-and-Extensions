@@ -11,7 +11,7 @@ import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum import *  # added by Ben
+from Pendulum70 import *  # added by Ben
 import matplotlib.pyplot as plt
 
 
@@ -20,12 +20,6 @@ def timer(start, end):
     hours, rem = divmod(end - start, 3600)
     minutes, seconds = divmod(rem, 60)
     print("\nTraining Time:  {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
-
-
-def reverse_state(state):
-    if state[0] < 0:
-        state = -state
-    return state
 
 
 def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
@@ -41,10 +35,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset(savedmodel)
-
-        state_rev = reverse_state(state)
-
+        state = eval_env.reset()
         rewards = 0
         rep = 0
         rep_max = 200
@@ -62,19 +53,13 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
                 # eval_env.render(mode="human")
                 eval_env.render(i + 1)
 
-            action = agent.act(np.expand_dims(state_rev, axis=0), eval=True)
-            action = np.clip(action, action_low, action_high)
-
-            #(action)
-            #print(state)
-            if state[0] < 0:
-                action[0] = -action[0]
-            #print(action)
-            state, reward, done, _ = eval_env.step(action[0])
+            action = agent.act(np.expand_dims(state, axis=0), eval=True)
+            action_v = np.clip(action, action_low, action_high)
+            state, reward, done, _ = eval_env.step(action_v[0])
 
             #print(np.asmatrix(state))
             #print(np.transpose(state))
-            state_action = np.append(state, action[0])
+            state_action = np.append(state, action_v[0])
             #print(state_action)
             state_action_log = np.concatenate((state_action_log,np.asmatrix(state_action)),axis=0)
             #print(state_action_log)
@@ -90,10 +75,10 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             #print(np.shape(state_action_log)[0])
             fig, axs = plt.subplots(3)
             fig.suptitle('Titlee')
-            t = np.arange(0, 0.0005*np.shape(state_action_log)[0], 0.0005)
+            t = np.arange(0, 0.001*np.shape(state_action_log)[0], 0.001)
             axs[0].plot(t[1:], state_action_log[1:,0])
             axs[1].plot(t[1:], state_action_log[1:,2])
-            axs[2].plot(t[1:], state_action_log[1:,3]*10)
+            axs[2].plot(t[1:], state_action_log[1:,3]*48)
             plt.show()
 
 
@@ -116,8 +101,7 @@ def run(args):
     scores = []  # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
-    state = envs.reset(args.saved_model)
-    state = reverse_state(state)
+    state = envs.reset()
     score = 0
     frames = args.frames // args.worker
     eval_every = args.eval_every // args.worker
@@ -137,17 +121,14 @@ def run(args):
         # evaluation runs
         # print("run")
         rep += 1
-        '''
-        if frame % eval_every == 0 or frame == 1:
-            evaluate(frame * worker, eval_runs, rend=args.render_evals)
-        '''
-        action = agent.act(state)
-        action = np.clip(action, action_low, action_high)
-        next_state, reward, done, _ = envs.step(action)  # returns np.stack(obs), np.stack(action) ...
 
-        #print(next_state)
-        next_state = reverse_state(next_state)
-        #print(next_state)
+        if args.saved_model != None:
+            if frame % eval_every == 0 or frame == 1:
+                evaluate(frame * worker, eval_runs, rend=args.render_evals)
+
+        action = agent.act(state)
+        action_v = np.clip(action, action_low, action_high)
+        next_state, reward, done, _ = envs.step(action_v)  # returns np.stack(obs), np.stack(action) ...
 
         # print(state, action, reward, next_state, done)
         # for s, a, r, ns, d in zip(state, action, reward, next_state, done):
@@ -169,12 +150,16 @@ def run(args):
             scores_window.append(score)  # save most recent score
             scores.append(score)  # save most recent score
             writer.add_scalar("Average100", np.mean(scores_window), frame * worker)
-            print('\rEpisode {}\tFrame: [{}/{}]\t Reward: {:.2f} \tAverage100 Score: {:.2f}'.format(i_episode * worker, frame * worker, frames, score, np.mean(scores_window)), end="", flush=True)
+            print('\rEpisode {}\tFrame: [{}/{}]\t Reward: {:.2f} \tAverage100 Score: {:.2f}'.format(i_episode * worker,
+                                                                                                    frame * worker,
+                                                                                                    frames, score,
+                                                                                                    np.mean(
+                                                                                                        scores_window)),
+                  end="", flush=True)
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(args.saved_model)
-            state = reverse_state(state)
+            state = envs.reset()
             score = 0
             episode_K = 0
 
@@ -235,7 +220,7 @@ if __name__ == "__main__":
     # envs.seed(args.seed)
     # eval_env.seed(args.seed+1)
     torch.manual_seed(args.seed)
-    # np.random.seed(args.seed)
+    np.random.seed(args.seed)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Using device: {}".format(device))

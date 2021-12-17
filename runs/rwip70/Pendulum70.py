@@ -37,7 +37,7 @@ class Pendulum:
         self.mass_wheel = (self.rad_out**2-self.rad_in**2)*pi*self.t*self.rho
         self.momentum_rod = self.mass_rod*(2*self.len_rod)**2/33
         self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
-        self.dt = 0.0005
+        self.dt = 0.001
         self.gravity = 9.81
         self.wheel_max_speed = 20
         self.max_torque = 20
@@ -64,21 +64,14 @@ class Pendulum:
             #print("font")
 
 
-    def reset(self, saved):
+    def reset(self):
         roll_range = 3 #in degree
         self.ang = roll_range
         #reset_max_speed = 3
 
-        if saved == None:
-            self.theta_rod = np.random.uniform(low=0, high=roll_range * pi / 180)
-        elif saved != None:
-            self.theta_rod = -roll_range * 0.3 * pi / 180
-        #print(self.theta_rod*180/pi)
-
         #self.theta_rod = np.random.uniform(low=-roll_range*pi/180, high=roll_range*pi/180)
-        #self.theta_rod = np.random.uniform(low=0, high=roll_range*pi/180)
-        #self.theta_rod = roll_range*0.3*pi/180
-        #print(self.theta_rod)
+        self.theta_rod = roll_range*1.0*pi/180
+        print(self.theta_rod)
 
         #print("\n",self.theta_rod)
         #self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
@@ -176,15 +169,7 @@ class Pendulum:
         #print("torque",torque)
         #print("\n")
         #print([torque, newq1[0], newq2[0], newq1_dot[0], newq2_dot[0]])
-
-        '''
-        if newq1[0] >= 0:
-            state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
-        else:
-            state = np.array([-newq1[0], -newq1_dot[0], -newq2_dot[0]], dtype=np.float32)
-        '''
         state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
-
         self.theta_rod = newq1
         self.theta_wheel = newq2
         self.theta_rod_dot = newq1_dot
