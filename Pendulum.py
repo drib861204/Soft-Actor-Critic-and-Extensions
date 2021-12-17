@@ -37,10 +37,10 @@ class Pendulum:
         self.mass_wheel = (self.rad_out**2-self.rad_in**2)*pi*self.t*self.rho
         self.momentum_rod = self.mass_rod*(2*self.len_rod)**2/33
         self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
-        self.dt = 0.0001
+        self.dt = 0.001
         self.gravity = 9.81
-        self.wheel_max_speed = 100
-        self.max_torque = 100
+        self.wheel_max_speed = 20
+        self.max_torque = 20
         self.torque = 0
         self.voltage = 0
 
@@ -67,11 +67,11 @@ class Pendulum:
     def reset(self):
         roll_range = 3 #in degree
         self.ang = roll_range
-        reset_max_speed = 3
+        #reset_max_speed = 3
 
         #self.theta_rod = np.random.uniform(low=-roll_range*pi/180, high=roll_range*pi/180)
-        self.theta_rod = roll_range*0.5*pi/180
-
+        self.theta_rod = roll_range*1.0*pi/180
+        print(self.theta_rod)
 
         #print("\n",self.theta_rod)
         #self.theta_rod = (np.random.random()*2-1)*roll_range*pi/180
@@ -128,20 +128,22 @@ class Pendulum:
         I2 = self.momentum_wheel
         dt = self.dt
         g = self.gravity
-        gear_ratio = 25
-        kt = 0.0229
-        ke = 0.0229
-        R = 0.71
-        action_scale = 12
+        #gear_ratio = 25
+        #kt = 0.0229
+        #ke = 0.0229
+        #R = 0.71
+        #action_scale = 12
         #gear_ratio = 7
         #kt = 0.55
         #ke = 0.34
         #R = 0.38
         #action_scale = 48
 
-        #torque = action
-        voltage = action * action_scale
-        torque = gear_ratio*kt/R*(voltage-ke*gear_ratio*q2_dot)
+        action_scale = 10
+
+        torque = action * action_scale
+        #voltage = action * action_scale
+        #torque = gear_ratio*kt/R*(voltage-ke*gear_ratio*q2_dot)
         torque = np.clip(torque, -self.max_torque, self.max_torque)
         #print("v",voltage)
         #print("T",torque)
@@ -173,7 +175,7 @@ class Pendulum:
         self.theta_rod_dot = newq1_dot
         self.theta_wheel_dot = newq2_dot
         self.torque = torque
-        self.voltage = voltage
+        #self.voltage = voltage
 
         #print(newq2_dot)
         '''
@@ -183,7 +185,7 @@ class Pendulum:
             costs = 1000 * angle_normalize(q1) ** 2 + 0.001*48**2
         '''
 
-        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * voltage ** 2
+        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
 
         return state, -costs, False, {}
 

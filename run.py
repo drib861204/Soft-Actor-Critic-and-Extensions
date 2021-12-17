@@ -75,7 +75,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             #print(np.shape(state_action_log)[0])
             fig, axs = plt.subplots(3)
             fig.suptitle('Titlee')
-            t = np.arange(0, 0.0001*np.shape(state_action_log)[0], 0.0001)
+            t = np.arange(0, 0.001*np.shape(state_action_log)[0], 0.001)
             axs[0].plot(t[1:], state_action_log[1:,0])
             axs[1].plot(t[1:], state_action_log[1:,2])
             axs[2].plot(t[1:], state_action_log[1:,3]*48)
@@ -122,8 +122,9 @@ def run(args):
         # print("run")
         rep += 1
 
-        if frame % eval_every == 0 or frame == 1:
-            evaluate(frame * worker, eval_runs, rend=args.render_evals)
+        if args.saved_model != None:
+            if frame % eval_every == 0 or frame == 1:
+                evaluate(frame * worker, eval_runs, rend=args.render_evals)
 
         action = agent.act(state)
         action_v = np.clip(action, action_low, action_high)
