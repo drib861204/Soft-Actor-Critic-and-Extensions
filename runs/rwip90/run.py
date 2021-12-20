@@ -11,7 +11,7 @@ import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum70 import *  # added by Ben
+from Pendulum import *  # added by Ben
 import matplotlib.pyplot as plt
 
 
@@ -35,12 +35,12 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset()
+        state = eval_env.reset(savedmodel)
         rewards = 0
         rep = 0
         rep_max = 200
         if savedmodel:
-            rep_max = 20000
+            rep_max = 3000
         # action_v = 0
 
         while True:
@@ -54,12 +54,12 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
                 eval_env.render(i + 1)
 
             action = agent.act(np.expand_dims(state, axis=0), eval=True)
-            action_v = np.clip(action, action_low, action_high)
-            state, reward, done, _ = eval_env.step(action_v[0])
+            action = np.clip(action, action_low, action_high)
+            state, reward, done, _ = eval_env.step(action[0])
 
             #print(np.asmatrix(state))
             #print(np.transpose(state))
-            state_action = np.append(state, action_v[0])
+            state_action = np.append(state, action[0])
             #print(state_action)
             state_action_log = np.concatenate((state_action_log,np.asmatrix(state_action)),axis=0)
             #print(state_action_log)
@@ -74,11 +74,16 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         if savedmodel:
             #print(np.shape(state_action_log)[0])
             fig, axs = plt.subplots(3)
-            fig.suptitle('Titlee')
-            t = np.arange(0, 0.001*np.shape(state_action_log)[0], 0.001)
+            fig.suptitle('RL state-input-time plot')
+            t = np.arange(0, eval_env.dt*np.shape(state_action_log)[0], eval_env.dt)
             axs[0].plot(t[1:], state_action_log[1:,0])
             axs[1].plot(t[1:], state_action_log[1:,2])
-            axs[2].plot(t[1:], state_action_log[1:,3]*48)
+            axs[2].plot(t[1:], state_action_log[1:,3]*eval_env.max_torque)
+            axs[0].set_ylabel('q1(rad)')
+            axs[1].set_ylabel('q2 dot(rad/s)')
+            axs[2].set_ylabel('torque(Nm)')
+            axs[2].set_xlabel('time(s)')
+
             plt.show()
 
 
@@ -101,7 +106,7 @@ def run(args):
     scores = []  # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
-    state = envs.reset()
+    state = envs.reset(args.saved_model)
     score = 0
     frames = args.frames // args.worker
     eval_every = args.eval_every // args.worker
@@ -122,13 +127,14 @@ def run(args):
         # print("run")
         rep += 1
 
-        if args.saved_model != None:
-            if frame % eval_every == 0 or frame == 1:
-                evaluate(frame * worker, eval_runs, rend=args.render_evals)
+        '''
+        if frame % eval_every == 0 or frame == 1:
+            evaluate(frame * worker, eval_runs, rend=args.render_evals)
+        '''
 
         action = agent.act(state)
-        action_v = np.clip(action, action_low, action_high)
-        next_state, reward, done, _ = envs.step(action_v)  # returns np.stack(obs), np.stack(action) ...
+        action = np.clip(action, action_low, action_high)
+        next_state, reward, done, _ = envs.step(action)  # returns np.stack(obs), np.stack(action) ...
 
         # print(state, action, reward, next_state, done)
         # for s, a, r, ns, d in zip(state, action, reward, next_state, done):
@@ -150,16 +156,11 @@ def run(args):
             scores_window.append(score)  # save most recent score
             scores.append(score)  # save most recent score
             writer.add_scalar("Average100", np.mean(scores_window), frame * worker)
-            print('\rEpisode {}\tFrame: [{}/{}]\t Reward: {:.2f} \tAverage100 Score: {:.2f}'.format(i_episode * worker,
-                                                                                                    frame * worker,
-                                                                                                    frames, score,
-                                                                                                    np.mean(
-                                                                                                        scores_window)),
-                  end="", flush=True)
+            print('\rEpisode {}\tFrame: [{}/{}]\t Reward: {:.2f} \tAverage100 Score: {:.2f}'.format(i_episode * worker, frame * worker, frames, score, np.mean(scores_window)), end="", flush=True)
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset()
+            state = envs.reset(args.saved_model)
             score = 0
             episode_K = 0
 

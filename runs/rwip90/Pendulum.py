@@ -28,7 +28,7 @@ class Pendulum:
         self.theta_rod_dot = 0
         self.theta_wheel_dot = 0
         self.len_rod = 0.35
-        self.len_wheel = 0.5 #0.5, 0.75
+        self.len_wheel = 0.5
         self.mass_rod = 20
         self.rad_out = 0.055
         self.rad_in = 0.032
@@ -64,13 +64,20 @@ class Pendulum:
             #print("font")
 
 
-    def reset(self):
+    def reset(self, saved):
         roll_range = 3 #in degree
         self.ang = roll_range
         #reset_max_speed = 3
 
-        self.theta_rod = np.random.uniform(low=-roll_range*pi/180, high=roll_range*pi/180)
-        # self.theta_rod = roll_range*0.8*pi/180
+        if saved == None:
+            self.theta_rod = np.random.uniform(low=-roll_range * pi / 180, high=roll_range * pi / 180)
+        elif saved != None:
+            self.theta_rod = roll_range * 1 * pi / 180
+        #print(self.theta_rod*180/pi)
+
+        #self.theta_rod = np.random.uniform(low=-roll_range*pi/180, high=roll_range*pi/180)
+        #self.theta_rod = np.random.uniform(low=0, high=roll_range*pi/180)
+        #self.theta_rod = roll_range*0.3*pi/180
         #print(self.theta_rod)
 
         #print("\n",self.theta_rod)
@@ -139,7 +146,7 @@ class Pendulum:
         #R = 0.38
         #action_scale = 48
 
-        action_scale = 10
+        action_scale = self.max_torque
 
         torque = action * action_scale
         #voltage = action * action_scale
@@ -169,7 +176,9 @@ class Pendulum:
         #print("torque",torque)
         #print("\n")
         #print([torque, newq1[0], newq2[0], newq1_dot[0], newq2_dot[0]])
+
         state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
+
         self.theta_rod = newq1
         self.theta_wheel = newq2
         self.theta_rod_dot = newq1_dot
@@ -185,8 +194,8 @@ class Pendulum:
             costs = 1000 * angle_normalize(q1) ** 2 + 0.001*48**2
         '''
 
-        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
-        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.01*q2_dot**2
+        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
+        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001*q2_dot**2
 
         return state, -costs, False, {}
 

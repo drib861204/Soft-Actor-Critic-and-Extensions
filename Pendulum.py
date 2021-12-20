@@ -28,19 +28,19 @@ class Pendulum:
         self.theta_rod_dot = 0
         self.theta_wheel_dot = 0
         self.len_rod = 0.35
-        self.len_wheel = 0.2 #0.5, 0.75
+        self.len_wheel = 0.5
         self.mass_rod = 20
-        self.rad_out = 0.15
-        self.rad_in = 0.08
+        self.rad_out = 0.055
+        self.rad_in = 0.032
         self.t = 0.02
         self.rho = 7870
         self.mass_wheel = (self.rad_out**2-self.rad_in**2)*pi*self.t*self.rho
         self.momentum_rod = self.mass_rod*(2*self.len_rod)**2/33
         self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
-        self.dt = 0.0005
+        self.dt = 0.001
         self.gravity = 9.81
         self.wheel_max_speed = 20
-        self.max_torque = 20
+        self.max_torque = 10
         self.torque = 0
         self.voltage = 0
 
@@ -70,9 +70,9 @@ class Pendulum:
         #reset_max_speed = 3
 
         if saved == None:
-            self.theta_rod = np.random.uniform(low=0, high=roll_range * pi / 180)
+            self.theta_rod = np.random.uniform(low=-roll_range * pi / 180, high=roll_range * pi / 180)
         elif saved != None:
-            self.theta_rod = -roll_range * 0.3 * pi / 180
+            self.theta_rod = roll_range * 1 * pi / 180
         #print(self.theta_rod*180/pi)
 
         #self.theta_rod = np.random.uniform(low=-roll_range*pi/180, high=roll_range*pi/180)
@@ -146,7 +146,7 @@ class Pendulum:
         #R = 0.38
         #action_scale = 48
 
-        action_scale = 10
+        action_scale = self.max_torque
 
         torque = action * action_scale
         #voltage = action * action_scale
@@ -177,12 +177,6 @@ class Pendulum:
         #print("\n")
         #print([torque, newq1[0], newq2[0], newq1_dot[0], newq2_dot[0]])
 
-        '''
-        if newq1[0] >= 0:
-            state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
-        else:
-            state = np.array([-newq1[0], -newq1_dot[0], -newq2_dot[0]], dtype=np.float32)
-        '''
         state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
 
         self.theta_rod = newq1
@@ -200,7 +194,9 @@ class Pendulum:
             costs = 1000 * angle_normalize(q1) ** 2 + 0.001*48**2
         '''
 
-        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
+        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
+        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001*q2_dot**2
+        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001*q2_dot**2
 
         return state, -costs, False, {}
 
