@@ -83,9 +83,9 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             axs[1].set_ylabel('q2 dot(rad/s)')
             axs[2].set_ylabel('torque(Nm)')
             axs[2].set_xlabel('time(s)')
-            #axs[0].set_ylim([-0.01,0.06])
-            axs[0].set_ylim([-pi-0.5,pi+0.5])
-            axs[1].set_ylim([-24,24])
+            axs[0].set_ylim([-0.01,0.06])
+            #axs[0].set_ylim([-pi-0.5,pi+0.5])
+            axs[1].set_ylim([-34,34])
             axs[2].set_ylim([-12,12])
             plt.show()
 
