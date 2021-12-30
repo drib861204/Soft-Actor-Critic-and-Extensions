@@ -39,7 +39,7 @@ class Pendulum:
         self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
         self.dt = 0.001
         self.gravity = 9.81
-        self.wheel_max_speed = 30
+        self.wheel_max_speed = 20
         self.max_torque = 10
         self.torque = 0
         self.voltage = 0
