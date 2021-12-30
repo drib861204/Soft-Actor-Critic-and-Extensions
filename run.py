@@ -60,7 +60,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
             #print(np.asmatrix(state))
             #print(np.transpose(state))
             state_action = np.append(state, action[0])
-            print(state_action)
+            #print(state_action)
             state_action_log = np.concatenate((state_action_log,np.asmatrix(state_action)),axis=0)
             #print(state_action_log)
             #print(rep)
@@ -226,7 +226,7 @@ parser.add_argument("-n_step", type=int, default=1, help="Using n-step bootstrap
 parser.add_argument("-info", type=str, default="rwip", help="Information or name of the run")
 parser.add_argument("-d2rl", type=int, choices=[0, 1], default=0,
                     help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
-parser.add_argument("-frames", type=int, default=100000,
+parser.add_argument("-frames", type=int, default=50000,
                     help="The amount of training interactions with the environment, default is 1mio")
 parser.add_argument("-eval_every", type=int, default=1000,
                     help="Number of interactions after which the evaluation runs are performed, default = 1000")
