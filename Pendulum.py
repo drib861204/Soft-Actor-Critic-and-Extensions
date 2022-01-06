@@ -195,8 +195,8 @@ class Pendulum:
         '''
 
         #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
-        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001*q2_dot**2
-        costs = torque ** 2 + 0.01 * q2_dot**2
+        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001*q2_dot**2
+        #costs = torque ** 2 + 0.01 * q2_dot**2
 
         return state, -costs, False, {}
 
