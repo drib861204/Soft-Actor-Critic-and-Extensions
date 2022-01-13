@@ -153,7 +153,7 @@ class Pendulum:
         #torque = gear_ratio*kt/R*(voltage-ke*gear_ratio*q2_dot)
         torque = np.clip(torque, -self.max_torque, self.max_torque)
         #print("v",voltage)
-        #print("T",torque)
+        # print("T",torque)
         #print("q2dot",q2_dot)
         #print("q2", q2)
 
@@ -176,6 +176,8 @@ class Pendulum:
         #print("torque",torque)
         #print("\n")
         #print([torque, newq1[0], newq2[0], newq1_dot[0], newq2_dot[0]])
+
+        # print("newq1",newq1)
 
         state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
 
