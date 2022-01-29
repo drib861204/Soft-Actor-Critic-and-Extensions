@@ -286,7 +286,7 @@ if __name__ == "__main__":
 
     t0 = time.time()
     if args.saved_model != None:
-        agent.actor_local.load_state_dict(torch.load(args.saved_model))
+        agent.actor_local.load_state_dict(torch.load(args.saved_model, map_location=device))
         evaluate(frame=None, capture=False, rend=args.render_evals, savedmodel=True)
     else:
         run(args)
