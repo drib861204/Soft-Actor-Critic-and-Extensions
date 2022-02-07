@@ -40,7 +40,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         rep = 0
         rep_max = 200
         if savedmodel:
-            rep_max = 3000
+            rep_max = 10000
         # action_v = 0
 
         while True:
@@ -73,17 +73,19 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
 
         if savedmodel:
             #print(np.shape(state_action_log)[0])
-            fig, axs = plt.subplots(3)
+            fig, axs = plt.subplots(4)
             fig.suptitle('SAC Transient Response')
             t = np.arange(0, eval_env.dt*np.shape(state_action_log)[0], eval_env.dt)
             axs[0].plot(t[1:], state_action_log[1:,0])
+            axs[3].plot(t[1:], state_action_log[1:,1])
             axs[1].plot(t[1:], state_action_log[1:,2])
             axs[2].plot(t[1:], state_action_log[1:,3]*eval_env.max_torque)
             axs[0].set_ylabel('q1(rad)')
             axs[1].set_ylabel('q2 dot(rad/s)')
             axs[2].set_ylabel('torque(Nm)')
+            axs[3].set_ylabel('q1 dot(rad/s)')
             axs[2].set_xlabel('time(s)')
-            axs[0].set_ylim([-0.01,0.06])
+            #axs[0].set_ylim([-0.01,0.06])
             #axs[0].set_ylim([-pi-0.5,pi+0.5])
             axs[1].set_ylim([-34,34])
             axs[2].set_ylim([-12,12])
@@ -173,15 +175,20 @@ def run(args):
         # print("run")
         rep += 1
 
-        '''
+
         if frame % eval_every == 0 or frame == 1:
             evaluate(frame * worker, eval_runs, rend=args.render_evals)
-        '''
+
 
         action = agent.act(state)
         action = np.clip(action, action_low, action_high)
         next_state, reward, done, _ = envs.step(action)  # returns np.stack(obs), np.stack(action) ...
-
+        '''
+        if frame > frames * 0.8:
+            next_state, reward, done, _ = envs.step_q2dot(action)
+        else:
+            next_state, reward, done, _ = envs.step(action)
+        '''
         # print(state, action, reward, next_state, done)
         # for s, a, r, ns, d in zip(state, action, reward, next_state, done):
         #    agent.step(s, a, r, ns, d, frame, ERE)

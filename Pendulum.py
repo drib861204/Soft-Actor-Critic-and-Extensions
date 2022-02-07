@@ -65,6 +65,7 @@ class Pendulum:
 
 
     def reset(self, saved):
+
         roll_range = 3 #in degree
         self.ang = roll_range
         #reset_max_speed = 3
@@ -86,6 +87,22 @@ class Pendulum:
         self.theta_rod_dot = 0
         #self.theta_rod_dot = (np.random.random() * 2 - 1) * reset_max_speed
         self.theta_wheel_dot = 0
+
+        '''
+        ##############################
+        # reset wheel velocity
+        wheel_vel = 20
+        if saved == None:
+            self.theta_wheel_dot = np.random.uniform(low=-wheel_vel, high=wheel_vel)
+        else:
+            self.theta_wheel_dot = wheel_vel
+
+        self.theta_rod = 0
+        self.theta_rod_dot = 0
+
+        ##############################
+        '''
+
         state = np.array([self.theta_rod, self.theta_rod_dot, self.theta_wheel_dot], dtype=np.float32)
         return state
 
@@ -113,10 +130,10 @@ class Pendulum:
         pygame.draw.circle(self.screen, GRAY, POSTIP, self.rad_out*2*SCALE/4)
         pygame.draw.circle(self.screen, RED, POSWHEEL, self.rad_out*2*SCALE/5/4)
         img = self.hint_font.render("torque  : % .4f" %self.torque, True, BLACK)
-        img2 = self.hint_font.render("voltage: % .4f" %self.voltage, True, BLACK)
+        #img2 = self.hint_font.render("voltage: % .4f" %self.voltage, True, BLACK)
         img3 = self.hint_font.render("Evaluation Run %d" %eval_run, True, BLACK)
         self.screen.blit(img, (self.origin_x, self.origin_y/2-50))
-        self.screen.blit(img2, (self.origin_x, self.origin_y/2-30))
+        #self.screen.blit(img2, (self.origin_x, self.origin_y/2-30))
         self.screen.blit(img3, (self.origin_x/5, self.origin_y/2-50))
 
         pygame.display.update()
@@ -196,12 +213,70 @@ class Pendulum:
             costs = 1000 * angle_normalize(q1) ** 2 + 0.001*48**2
         '''
 
-        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
-        # costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001*q2_dot**2
-        #costs = torque ** 2 + 0.01 * q2_dot**2
+        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
+        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
+        # costs = 100 * angle_normalize(q1) ** 2 + 0.00001 * q2_dot ** 2
+        costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2
+
+
+        if abs(angle_normalize(q1)) < 0.002 and abs(q1_dot) < 0.002 and abs(q2_dot) < 0.1 :
+            costs -= 100
+        #elif abs(angle_normalize(q1)) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.01 :
+        #    costs -= 1000
 
         return state, -costs, False, {}
 
+    '''
+    def step_q2dot(self, action):
+        q1 = self.theta_rod
+        q2 = self.theta_wheel
+        q1_dot = self.theta_rod_dot
+        q2_dot = self.theta_wheel_dot
+        l1 = self.len_rod
+        l2 = self.len_wheel
+        m1 = self.mass_rod
+        m2 = self.mass_wheel
+        I1 = self.momentum_rod
+        I2 = self.momentum_wheel
+        dt = self.dt
+        g = self.gravity
+
+        action_scale = self.max_torque
+
+        torque = action * action_scale
+        torque = np.clip(torque, -self.max_torque, self.max_torque)
+
+        Ip = m1*l1**2+m2*l2**2+I1+I2
+        a = (m1*l1+m2*l2)*g*sin(angle_normalize(q1))
+
+        newq1_dot = q1_dot + ((a-torque)/(Ip-I2))*dt
+        newq1 = angle_normalize(angle_normalize(q1) + newq1_dot * dt)
+
+        newq2_dot = q2_dot + ((torque*Ip-a*I2)/I2/(Ip-I2))*dt
+        newq2_dot = np.clip(newq2_dot, -self.wheel_max_speed, self.wheel_max_speed)
+        newq2 = angle_normalize(angle_normalize(q2) + newq2_dot * dt)
+
+        state = np.array([newq1[0], newq1_dot[0], newq2_dot[0]], dtype=np.float32)
+
+        self.theta_rod = newq1
+        self.theta_wheel = newq2
+        self.theta_rod_dot = newq1_dot
+        self.theta_wheel_dot = newq2_dot
+        self.torque = torque
+
+        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
+        #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
+        # costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2
+        costs = 0.0001 * q2_dot ** 2
+
+        
+        #if abs(angle_normalize(q1)) < 0.002 and abs(q1_dot) < 0.002 and abs(q2_dot) < 0.1 :
+        #    costs -= 100
+        #elif abs(angle_normalize(q1)) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.01 :
+        #    costs -= 1000
+        
+        return state, -costs, False, {}
+    '''
 
     def close(self):
         pygame.display.quit()
