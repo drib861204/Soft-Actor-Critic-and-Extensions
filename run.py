@@ -40,7 +40,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         rep = 0
         rep_max = 200
         if savedmodel:
-            rep_max = 10000
+            rep_max = 3000
         # action_v = 0
 
         while True:
