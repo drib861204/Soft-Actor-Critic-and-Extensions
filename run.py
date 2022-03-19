@@ -38,7 +38,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         state = eval_env.reset(savedmodel)
         rewards = 0
         rep = 0
-        rep_max = 200
+        rep_max = 500 #200
         if savedmodel:
             rep_max = 3000
         # action_v = 0
@@ -141,6 +141,8 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
 
 
 def run(args):
+    rep_max = 500
+
     """Deep Q-Learning.
 
     Params
@@ -201,7 +203,7 @@ def run(args):
         score += np.mean(reward)
 
         # if done.any():
-        if done or rep % 200 == 0:
+        if done or rep % rep_max == 0:
             if ERE:
                 for k in range(1, episode_K):
                     c_k = max(int(agent.memory.__len__() * eta_t ** (k * (max_ep_len / episode_K))), c_k_min)

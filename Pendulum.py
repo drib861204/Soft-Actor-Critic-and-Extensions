@@ -66,7 +66,7 @@ class Pendulum:
 
     def reset(self, saved):
 
-        roll_range = -3 #in degree
+        roll_range = 3 #in degree
         self.ang = roll_range
         #reset_max_speed = 3
 
@@ -214,15 +214,25 @@ class Pendulum:
         '''
 
         #costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
-        # costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
+        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
         # costs = 100 * angle_normalize(q1) ** 2 + 0.00001 * q2_dot ** 2
-        costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2 + 100 * torque ** 2 + 0.001 * q2_dot ** 2
+        #costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2 + 100 * torque ** 2 + 0.001 * q2_dot ** 2
 
 
         #if abs(angle_normalize(q1)) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.1 :
         #    costs -= 1000
         #elif abs(angle_normalize(q1)) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.01 :
         #    costs -= 1000
+
+        #if ( angle_normalize(q1) <= self.ang*pi/180 and
+        #    angle_normalize(q1) >= -self.ang * pi / 180):
+        #    costs = -1
+        #else:
+        #    costs = 0
+        if (q2_dot <= 0.1 and q2_dot >= -0.1):
+            costs -= 1
+        else:
+            costs -= 0
 
         return state, -costs, False, {}
 
