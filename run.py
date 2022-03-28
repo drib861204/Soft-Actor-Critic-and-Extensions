@@ -11,7 +11,7 @@ import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum import *  # added by Ben
+from Pendulum_v3_new_bike_params import *  # added by Ben
 import matplotlib.pyplot as plt
 
 
@@ -38,9 +38,9 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         state = eval_env.reset(savedmodel)
         rewards = 0
         rep = 0
-        rep_max = 500 #200
+        rep_max = 200
         if savedmodel:
-            rep_max = 3000
+            rep_max = 10000
         # action_v = 0
 
         while True:
@@ -141,7 +141,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
 
 
 def run(args):
-    rep_max = 500
+    rep_max = 200
 
     """Deep Q-Learning.
 
