@@ -176,7 +176,8 @@ class Pendulum:
         #print("q2", q2)
 
         # Ip = m1*l1**2+m2*l2**2+I1+I2
-        Ip = m2*l2**2+I1+I2+((2*self.len_rod)*self.mass_rod*self.len_rod**2 + (1-(2*self.len_rod))*self.mass_rod*(0.5*(1-(2*self.len_rod))+2*self.len_rod)**2)
+        # Ip = m2*l2**2+I1+I2+((2*self.len_rod)*self.mass_rod*self.len_rod**2 + (1-(2*self.len_rod))*self.mass_rod*(0.5*(1-(2*self.len_rod))+2*self.len_rod)**2)
+        Ip = m2*l2**2+I1+I2 + 2*l1*m1*l1**2+(1-2*l1)*m1*(0.5*(1-2*l1)+2*l1)**2
         a = (m1*l1+m2*l2)*g*sin(angle_normalize(q1))
 
         newq1_dot = q1_dot + ((a-torque)/(Ip-I2))*dt
