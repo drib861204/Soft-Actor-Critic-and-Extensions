@@ -229,10 +229,10 @@ class Pendulum:
         #    costs = -1
         #else:
         #    costs = 0
-        if (q2_dot <= 0.1 and q2_dot >= -0.1):
-            costs -= 1
-        else:
-            costs -= 0
+        #if (q2_dot <= 0.1 and q2_dot >= -0.1):
+        #    costs -= 1
+        #else:
+        #    costs -= 0
 
         return state, -costs, False, {}
 

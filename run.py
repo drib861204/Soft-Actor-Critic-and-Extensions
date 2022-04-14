@@ -1,6 +1,6 @@
 import numpy as np
 import random
-# import gym
+import gym
 # import pybulletgym # to run e.g. HalfCheetahPyBullet-v0
 # import pybullet_envs # to run e.g. HalfCheetahBullet-v0 different reward function bullet-v0 starts ~ -1500. pybullet-v0 starts at 0
 from collections import deque
@@ -11,7 +11,7 @@ import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum_v3_new_bike_params import *  # added by Ben
+from Pendulum_v2 import *  # added by Ben
 import matplotlib.pyplot as plt
 
 
@@ -38,7 +38,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         state = eval_env.reset(savedmodel)
         rewards = 0
         rep = 0
-        rep_max = 200
+        rep_max = 500 #200
         if savedmodel:
             rep_max = 10000
         # action_v = 0
@@ -141,7 +141,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
 
 
 def run(args):
-    rep_max = 200
+    rep_max = 500#200
 
     """Deep Q-Learning.
 
