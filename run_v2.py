@@ -11,7 +11,7 @@ import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum import *  # added by Ben
+from Pendulum_v2 import *  # added by Ben
 import matplotlib.pyplot as plt
 
 
@@ -22,7 +22,7 @@ def timer(start, end):
     print("\nTraining Time:  {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
 
 
-def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
+def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False, seed=0):
     """
     Makes an evaluation run with the current episode
     """
@@ -35,10 +35,10 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset(savedmodel)
+        state = eval_env.reset(savedmodel, seed)
         rewards = 0
         rep = 0
-        rep_max = 500 #200
+        rep_max = 200
         if savedmodel:
             rep_max = 10000
         # action_v = 0
@@ -141,7 +141,7 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
 
 
 def run(args):
-    rep_max = 500#200
+    rep_max = 200
 
     """Deep Q-Learning.
 
@@ -156,7 +156,7 @@ def run(args):
     scores = []  # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
-    state = envs.reset(args.saved_model)
+    state = envs.reset(args.saved_model, args.seed)
     score = 0
     frames = args.frames // args.worker
     eval_every = args.eval_every // args.worker
@@ -179,7 +179,7 @@ def run(args):
 
 
         if frame % eval_every == 0 or frame == 1:
-            evaluate(frame * worker, eval_runs, rend=args.render_evals)
+            evaluate(frame * worker, eval_runs, rend=args.render_evals, seed=args.seed)
 
 
         action = agent.act(state)
@@ -215,7 +215,7 @@ def run(args):
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(args.saved_model)
+            state = envs.reset(args.saved_model, args.seed)
             score = 0
             episode_K = 0
 
@@ -266,7 +266,7 @@ args = parser.parse_args()
 if __name__ == "__main__":
 
     if args.saved_model == None:
-        writer = SummaryWriter("runs/" + args.info + str(args.trial))
+        writer = SummaryWriter("runs_v2/" + args.info + str(args.trial))
     # envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     # eval_env = gym.make(args.env)
 
@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Using device: {}".format(device))
-    '''
+
     action_high = eval_env.action_space.high[0]
     action_low = eval_env.action_space.low[0]
     state_size = eval_env.observation_space.shape[0]
@@ -290,13 +290,13 @@ if __name__ == "__main__":
     action_low = -1
     state_size = 3
     action_size = 1
-
+    '''
     agent = Agent(state_size=state_size, action_size=action_size, args=args, device=device)
 
     t0 = time.time()
     if args.saved_model != None:
         agent.actor_local.load_state_dict(torch.load(args.saved_model, map_location=device))
-        evaluate(frame=None, capture=False, rend=args.render_evals, savedmodel=True)
+        evaluate(frame=None, capture=False, rend=args.render_evals, savedmodel=True, seed=args.seed)
     else:
         run(args)
         t1 = time.time()
@@ -304,10 +304,10 @@ if __name__ == "__main__":
 
         # save policy
         torch.save(agent.actor_local.state_dict(),
-                   'runs/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".pth")
+                   'runs_v2/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".pth")
 
         # save parameter
-        with open('runs/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".json", 'w') as f:
+        with open('runs_v2/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".json", 'w') as f:
             json.dump(args.__dict__, f, indent=2)
 
     eval_env.close()

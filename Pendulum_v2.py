@@ -19,7 +19,7 @@ import numpy as np
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
-from gym.utils.seeding import RandomNumberGenerator
+#from gym.utils.seeding import RandomNumberGenerator
 
 
 class Pendulum(gym.Env):
@@ -62,8 +62,8 @@ class Pendulum(gym.Env):
         self.mbarg = (m1*l1+m2*l2)*self.gravity
 
         high = np.array([2*self.max_q1, self.max_q1dot, self.wheel_max_speed], dtype=np.float32)
-        #self.action_space = spaces.Box(low=-self.max_torque, high=self.max_torque, shape=(1,), dtype=np.float32)
-        self.action_space = spaces.Discrete(3)
+        self.action_space = spaces.Box(low=-self.max_torque, high=self.max_torque, shape=(1,), dtype=np.float32)
+        #self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(low=-high, high=high, dtype=np.float32)
 
         #print(self.mass_wheel)
@@ -89,14 +89,16 @@ class Pendulum(gym.Env):
     def reset(self, saved, seed, return_info=False):
 
         #self.np_random = np.random.seed(seed)
-        super().reset(seed=seed)
+        #super().reset(seed=seed)
         #self._np_random, seed = seeding.np_random(seed)
 
         reset_angle = 10*pi/180
+        self.ang = reset_angle
 
         if saved == None:
             reset_high = np.array([reset_angle, self.max_q1dot, self.wheel_max_speed])
-            self.state = self.np_random.uniform(low=-reset_high, high=reset_high)
+            #self.state = self.np_random.uniform(low=-reset_high, high=reset_high)
+            self.state = np.random.uniform(low=-reset_high, high=reset_high)
         else:
             self.state = np.array([reset_angle, 0, 0], dtype=np.float32)
             # self.state = np.array([0, self.max_q1dot, 0],dtype=np.float32)
@@ -156,11 +158,12 @@ class Pendulum(gym.Env):
         I2 = self.momentum_wheel
         dt = self.dt
         #g = self.gravity
-        #action_scale = self.max_torque
+        action_scale = self.max_torque
 
-        #torque = action * action_scale
-        #torque = np.clip(torque, -self.max_torque, self.max_torque)
-
+        torque = action * action_scale
+        torque = np.clip(torque, -self.max_torque, self.max_torque)
+        torque = torque[0]
+        '''
         if action == 0:
             torque = 0
         elif action == 1:
@@ -169,7 +172,7 @@ class Pendulum(gym.Env):
             torque = self.max_torque
         else:
             torque = 1000000
-
+        '''
         #Ip = m2*l2**2+I1+I2 + 2*l1*m1*l1**2+(1-2*l1)*m1*(0.5*(1-2*l1)+2*l1)**2
         #a = (m1*l1+m2*l2)*g*sin(angle_normalize(q1))
         Ip = self.Ip
@@ -188,9 +191,9 @@ class Pendulum(gym.Env):
         done = bool(
             q1 < -self.max_q1
             or q1 > self.max_q1
-            or q1_dot < -self.max_q1dot
-            or q1_dot > self.max_q1dot
         )
+            #or q1_dot < -self.max_q1dot
+            #or q1_dot > self.max_q1dot
 
         self.theta_rod = q1
         self.theta_wheel = q2
