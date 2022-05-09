@@ -11,7 +11,7 @@ import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum import *  # added by Ben
+from Pendulum_v3 import *  # added by Ben
 import matplotlib.pyplot as plt
 
 
@@ -22,7 +22,7 @@ def timer(start, end):
     print("\nTraining Time:  {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
 
 
-def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
+def evaluate(frame, args, eval_runs=5, capture=False):
     """
     Makes an evaluation run with the current episode
     """
@@ -35,26 +35,27 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset(savedmodel)
+        state = eval_env.reset(args.saved_model)
         rewards = 0
         rep = 0
-        rep_max = 500 #200
-        if savedmodel:
-            rep_max = 10000
-        # action_v = 0
+        rep_max = args.rep_max
+        if args.saved_model:
+            time_duration = 5 #second
+            rep_max = time_duration/eval_env.dt
 
         while True:
 
             # print("eval")
             # print(rend)
+            rep += 1
 
-            if rend:
+            if args.render_evals:
                 # print("render")
                 # eval_env.render(mode="human")
                 eval_env.render(i + 1)
 
             action = agent.act(np.expand_dims(state, axis=0), eval=True)
-            action = np.clip(action, action_low, action_high)
+            # action = np.clip(action, action_low, action_high) <- no need, already in range (-1,+1)
             state, reward, done, _ = eval_env.step(action[0])
 
             #print(np.asmatrix(state))
@@ -68,10 +69,10 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
 
             rewards += reward
             if done or rep >= rep_max:
+                rep = 0
                 break
-            rep += 1
 
-        if savedmodel:
+        if args.saved_model:
             #print(np.shape(state_action_log)[0])
             fig, axs = plt.subplots(4)
             fig.suptitle('SAC Transient Response')
@@ -136,12 +137,12 @@ def evaluate(frame, eval_runs=5, capture=False, rend=False, savedmodel=False):
 
 
         reward_batch.append(rewards)
-    if capture == False and savedmodel == False:
+    if capture == False and args.saved_model == False:
         writer.add_scalar("Reward", np.mean(reward_batch), frame)
 
 
 def run(args):
-    rep_max = 500#200
+    rep_max = args.rep_max
 
     """Deep Q-Learning.
 
@@ -177,13 +178,11 @@ def run(args):
         # print("run")
         rep += 1
 
-
         if frame % eval_every == 0 or frame == 1:
-            evaluate(frame * worker, eval_runs, rend=args.render_evals)
-
+            evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
 
         action = agent.act(state)
-        action = np.clip(action, action_low, action_high)
+        #action = np.clip(action, action_low, action_high) <- no need, already in range (-1,+1)
         next_state, reward, done, _ = envs.step(action)  # returns np.stack(obs), np.stack(action) ...
         '''
         if frame > frames * 0.8:
@@ -203,7 +202,8 @@ def run(args):
         score += np.mean(reward)
 
         # if done.any():
-        if done or rep % rep_max == 0:
+        if done or rep >= rep_max:
+            rep = 0
             if ERE:
                 for k in range(1, episode_K):
                     c_k = max(int(agent.memory.__len__() * eta_t ** (k * (max_ep_len / episode_K))), c_k_min)
@@ -261,12 +261,13 @@ parser.add_argument("-w", "--worker", type=int, default=1, help="Number of paral
 parser.add_argument("-r", "--render_evals", type=int, default=0, choices=[0, 1],
                     help="Rendering the evaluation runs if set to 1, default=0")
 parser.add_argument("--trial", type=int, default=0, help="trial")
+parser.add_argument("--rep_max", type=int, default=500, help="maximum steps in one episode")
 args = parser.parse_args()
 
 if __name__ == "__main__":
 
     if args.saved_model == None:
-        writer = SummaryWriter("runs/" + args.info + str(args.trial))
+        writer = SummaryWriter("runs_v3/" + args.info + str(args.trial))
     # envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     # eval_env = gym.make(args.env)
 
@@ -280,23 +281,18 @@ if __name__ == "__main__":
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Using device: {}".format(device))
-    '''
-    action_high = eval_env.action_space.high[0]
-    action_low = eval_env.action_space.low[0]
+
+    #action_high = eval_env.action_space.high[0]
+    #action_low = eval_env.action_space.low[0]
     state_size = eval_env.observation_space.shape[0]
     action_size = eval_env.action_space.shape[0]
-    '''
-    action_high = 1
-    action_low = -1
-    state_size = 3
-    action_size = 1
 
     agent = Agent(state_size=state_size, action_size=action_size, args=args, device=device)
 
     t0 = time.time()
     if args.saved_model != None:
         agent.actor_local.load_state_dict(torch.load(args.saved_model, map_location=device))
-        evaluate(frame=None, capture=False, rend=args.render_evals, savedmodel=True)
+        evaluate(frame=None, args=args, capture=False)
     else:
         run(args)
         t1 = time.time()
@@ -304,10 +300,10 @@ if __name__ == "__main__":
 
         # save policy
         torch.save(agent.actor_local.state_dict(),
-                   'runs/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".pth")
+                   'runs_v3/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".pth")
 
         # save parameter
-        with open('runs/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".json", 'w') as f:
+        with open('runs_v3/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".json", 'w') as f:
             json.dump(args.__dict__, f, indent=2)
 
     eval_env.close()
