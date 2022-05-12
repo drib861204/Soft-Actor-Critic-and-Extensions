@@ -79,7 +79,7 @@ class Pendulum(gym.Env):
 
     def reset(self, saved):
 
-        self.ang = 10*pi/180 # reset angle
+        self.ang = 8*pi/180 # reset angle
 
         if saved == None:
             reset_angle_random = np.random.uniform(low=-self.ang, high=self.ang)
@@ -87,7 +87,7 @@ class Pendulum(gym.Env):
             #self.state = np.random.uniform(low=-reset_high, high=reset_high)
             self.state = np.array([reset_angle_random, 0, 0], dtype=np.float32)
         else:
-            self.state = np.array([-self.ang, 0, 0], dtype=np.float32)
+            self.state = np.array([self.ang, 0, 0], dtype=np.float32)
             # self.state = np.array([0, self.max_q1dot, 0],dtype=np.float32)
 
         #self.last_u = None
@@ -129,6 +129,7 @@ class Pendulum(gym.Env):
 
     def step(self, action):
         q1, q1_dot, q2_dot = self.state
+        q1 = angle_normalize(q1)
 
         #q1 = self.theta_rod
         q2 = self.theta_wheel
@@ -148,10 +149,10 @@ class Pendulum(gym.Env):
         torque = torque[0]
 
         Ip = self.Ip
-        a = self.mbarg*sin(angle_normalize(q1))
+        a = self.mbarg*sin(q1)
 
         q1_dot = q1_dot + ((a-torque)/(Ip-I2))*dt
-        q1 = angle_normalize(angle_normalize(q1) + q1_dot * dt)
+        q1 = angle_normalize(q1 + q1_dot * dt)
 
         q2_dot = q2_dot + ((torque*Ip-a*I2)/I2/(Ip-I2))*dt
         q2_dot = np.clip(q2_dot, -self.wheel_max_speed, self.wheel_max_speed)
@@ -173,17 +174,21 @@ class Pendulum(gym.Env):
         self.theta_wheel_dot = q2_dot
         self.torque = torque
 
-        costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2
-        # costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
-        # costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
-        # costs = 100 * angle_normalize(q1) ** 2 + 0.00001 * q2_dot ** 2
-        # costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2 + 100 * torque ** 2 + 0.001 * q2_dot ** 2
+        # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2
+        # costs = 1000 * q1 ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
+        # costs = 1000 * q1 ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
+        # costs = 100 * q1 ** 2 + 0.00001 * q2_dot ** 2
+        # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 100 * torque ** 2 + 0.001 * q2_dot ** 2
 
+        #if abs(q1) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.1 :
+        #    costs -= 1000
+        #elif abs(q1) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.01 :
+        #    costs -= 1000
 
-        #if abs(angle_normalize(q1)) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.1 :
-        #    costs -= 1000
-        #elif abs(angle_normalize(q1)) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.01 :
-        #    costs -= 1000
+        if q1 > 0.02 or q1 < -0.02 or q1_dot > 0.05 or q1_dot < -0.05:
+            costs = 100 * q1 ** 2 + 1 * q1_dot ** 2
+        else:
+            costs = 0.0001 * q2_dot ** 2
 
         #return state, -costs, False, {}
         return np.array(self.state, dtype=np.float32), -costs, done, {}
