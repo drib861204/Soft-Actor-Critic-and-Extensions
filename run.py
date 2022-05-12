@@ -89,7 +89,7 @@ def evaluate(frame, args, eval_runs=5, capture=False):
             #axs[0].set_ylim([-0.01,0.06])
             #axs[0].set_ylim([-pi-0.5,pi+0.5])
             axs[1].set_ylim([-34,34])
-            axs[2].set_ylim([-12,12])
+            #axs[2].set_ylim([-12,12])
             plt.show()
 
             print("e_ss=",state_action_log[-1,0])

@@ -47,7 +47,7 @@ class Pendulum(gym.Env):
         self.max_q1 = 15*pi/180 # stop training below this angle
         self.max_q1dot = 0.3 #initial q1_dot default 0.3? to be verified
         self.wheel_max_speed = 20
-        self.max_torque = 15
+        self.max_torque = 20
         self.torque = 0
 
         self.Ip = self.mass_rod*self.len_rod**2+self.mass_wheel*self.len_wheel**2+self.momentum_rod+self.momentum_wheel
@@ -173,8 +173,9 @@ class Pendulum(gym.Env):
         self.theta_wheel_dot = q2_dot
         self.torque = torque
 
+        costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2
         # costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
-        costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
+        # costs = 1000 * angle_normalize(q1) ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
         # costs = 100 * angle_normalize(q1) ** 2 + 0.00001 * q2_dot ** 2
         # costs = 100 * angle_normalize(q1) ** 2 + 1 * q1_dot ** 2 + 100 * torque ** 2 + 0.001 * q2_dot ** 2
 
