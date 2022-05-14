@@ -49,6 +49,7 @@ class Pendulum(gym.Env):
         self.wheel_max_speed = 20
         self.max_torque = 20
         self.torque = 0
+        self.last_torque = 0
 
         self.Ip = self.mass_rod*self.len_rod**2+self.mass_wheel*self.len_wheel**2+self.momentum_rod+self.momentum_wheel
         self.mbarg = (self.mass_rod*self.len_rod+self.mass_wheel*self.len_wheel)*self.gravity
@@ -79,7 +80,7 @@ class Pendulum(gym.Env):
 
     def reset(self, saved):
 
-        self.ang = 8*pi/180 # reset angle
+        self.ang = 10*pi/180 # reset angle
 
         if saved == None:
             reset_angle_random = np.random.uniform(low=-self.ang, high=self.ang)
@@ -87,10 +88,11 @@ class Pendulum(gym.Env):
             #self.state = np.random.uniform(low=-reset_high, high=reset_high)
             self.state = np.array([reset_angle_random, 0, 0], dtype=np.float32)
         else:
-            self.state = np.array([self.ang, 0, 0], dtype=np.float32)
+            self.state = np.array([-self.ang, 0, 0], dtype=np.float32)
             # self.state = np.array([0, self.max_q1dot, 0],dtype=np.float32)
 
         #self.last_u = None
+        self.last_torque = 0
 
         return self.state
 
@@ -185,10 +187,12 @@ class Pendulum(gym.Env):
         #elif abs(q1) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.01 :
         #    costs -= 1000
 
-        if q1 > 0.02 or q1 < -0.02 or q1_dot > 0.05 or q1_dot < -0.05:
-            costs = 100 * q1 ** 2 + 1 * q1_dot ** 2
+        if q1 > 0.01 or q1 < -0.01 or q1_dot > 0.05 or q1_dot < -0.05:
+            costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2
         else:
-            costs = 0.0001 * q2_dot ** 2
+            costs = 0.000025 * q2_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2
+
+        self.last_torque = torque
 
         #return state, -costs, False, {}
         return np.array(self.state, dtype=np.float32), -costs, done, {}

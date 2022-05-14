@@ -40,7 +40,7 @@ def evaluate(frame, args, eval_runs=5, capture=False):
         rep = 0
         rep_max = args.rep_max
         if args.saved_model:
-            time_duration = 15 #second
+            time_duration = 5 #second
             rep_max = time_duration/eval_env.dt
 
         while True:
