@@ -18,16 +18,10 @@ import numpy as np
 
 import gym
 from gym import spaces, logger
-from gym.utils import seeding
-#from gym.utils.seeding import RandomNumberGenerator
 
 
 class Pendulum(gym.Env):
-    def __init__(self, rend, seed):
-        #np.random.seed(seed)
-        #self.np_random = np.random.seed(seed)
-        #for i in range(10):
-        #    print(np.random.uniform(low=-3.5, high=3.5)*pi/180)
+    def __init__(self, rend):
 
         self.theta_rod = 0
         self.theta_wheel = 0
@@ -82,7 +76,6 @@ class Pendulum(gym.Env):
 
     def reset(self, saved):
         # self.state is for render, self.agent_state is for training
-        super().reset(seed=seed)
 
         self.ang = 10*pi/180 # reset angle
 
@@ -99,9 +92,6 @@ class Pendulum(gym.Env):
 
         #self.last_u = None
         self.last_torque = 0
-
-        print("state: ", self.state)
-        #print("agent state: ", self.agent_state)
 
         return self.agent_state
 

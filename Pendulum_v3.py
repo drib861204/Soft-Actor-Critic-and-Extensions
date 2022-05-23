@@ -16,21 +16,12 @@ import pygame
 from math import pi, sin, cos
 import numpy as np
 
-from typing import Optional
-
 import gym
 from gym import spaces, logger
-from gym.utils import seeding
-#from gym.utils.seeding import RandomNumberGenerator
 
 
 class Pendulum(gym.Env):
-    def __init__(self, rend, seed):
-        #self.seed = seed
-        #np.random.seed(seed)
-        #self.np_random = np.random.seed(seed)
-        #for i in range(10):
-        #    print(np.random.uniform(low=-3.5, high=3.5)*pi/180)
+    def __init__(self, rend):
 
         self.theta_rod = 0
         self.theta_wheel = 0
@@ -97,8 +88,6 @@ class Pendulum(gym.Env):
 
         #self.last_u = None
         self.last_torque = 0
-
-        print("state: ", self.state[0])
 
         return self.state
 

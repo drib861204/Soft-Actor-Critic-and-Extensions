@@ -11,7 +11,7 @@ import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum_v3 import *  # added by Ben
+from Pendulum_v3_mirror import *  # added by Ben
 import matplotlib.pyplot as plt
 
 
@@ -273,11 +273,11 @@ if __name__ == "__main__":
     # envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     # eval_env = gym.make(args.env)
 
-    envs = Pendulum(args.render_evals, args.seed)
-    eval_env = Pendulum(args.render_evals, args.seed + 1)
+    envs = Pendulum(args.render_evals)
+    eval_env = Pendulum(args.render_evals)
 
-    envs.seed=args.seed
-    eval_env.seed=args.seed+1
+    #envs.seed=args.seed
+    #eval_env.seed=args.seed+1
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
