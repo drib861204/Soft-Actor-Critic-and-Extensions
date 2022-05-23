@@ -35,7 +35,7 @@ def evaluate(frame, args, eval_runs=5, capture=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset(args.saved_model)
+        state = eval_env.reset(saved=args.saved_model)
         rewards = 0
         rep = 0
         rep_max = args.rep_max
@@ -157,7 +157,7 @@ def run(args):
     scores = []  # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
-    state = envs.reset(args.saved_model)
+    state = envs.reset(saved=args.saved_model)
     score = 0
     frames = args.frames // args.worker
     eval_every = args.eval_every // args.worker
@@ -178,8 +178,8 @@ def run(args):
         # print("run")
         rep += 1
 
-        if frame % eval_every == 0 or frame == 1:
-            evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
+        #if frame % eval_every == 0 or frame == 1:
+        #    evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
 
         action = agent.act(state)
         #action = np.clip(action, action_low, action_high) <- no need, already in range (-1,+1)
@@ -194,6 +194,8 @@ def run(args):
         # for s, a, r, ns, d in zip(state, action, reward, next_state, done):
         #    agent.step(s, a, r, ns, d, frame, ERE)
         agent.step(state, action, reward, next_state, [done], frame, ERE)
+
+        #print(time.time())
 
         if ERE:
             eta_t = eta_0 + (eta_T - eta_0) * (frame / (frames + 1))
@@ -215,7 +217,7 @@ def run(args):
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(args.saved_model)
+            state = envs.reset(saved=args.saved_model)
             score = 0
             episode_K = 0
 
@@ -274,8 +276,8 @@ if __name__ == "__main__":
     envs = Pendulum(args.render_evals, args.seed)
     eval_env = Pendulum(args.render_evals, args.seed + 1)
 
-    # envs.seed(args.seed)
-    # eval_env.seed(args.seed+1)
+    envs.seed=args.seed
+    eval_env.seed=args.seed+1
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 

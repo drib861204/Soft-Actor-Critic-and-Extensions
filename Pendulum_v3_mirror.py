@@ -16,8 +16,6 @@ import pygame
 from math import pi, sin, cos
 import numpy as np
 
-from typing import Optional
-
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
@@ -26,7 +24,6 @@ from gym.utils import seeding
 
 class Pendulum(gym.Env):
     def __init__(self, rend, seed):
-        #self.seed = seed
         #np.random.seed(seed)
         #self.np_random = np.random.seed(seed)
         #for i in range(10):
@@ -59,8 +56,9 @@ class Pendulum(gym.Env):
         self.mbarg = (self.mass_rod*self.len_rod+self.mass_wheel*self.len_wheel)*self.gravity
 
         high = np.array([2*self.max_q1, self.max_q1dot, self.wheel_max_speed], dtype=np.float32)
+        low = np.array([0, -self.max_q1dot, -self.wheel_max_speed], dtype=np.float32)
         self.action_space = spaces.Box(low=-self.max_torque, high=self.max_torque, shape=(1,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=-high, high=high, dtype=np.float32)
+        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
         #print(self.mass_wheel)
         #print(self.momentum_rod)
@@ -83,6 +81,8 @@ class Pendulum(gym.Env):
 
 
     def reset(self, saved):
+        # self.state is for render, self.agent_state is for training
+        super().reset(seed=seed)
 
         self.ang = 10*pi/180 # reset angle
 
@@ -91,16 +91,19 @@ class Pendulum(gym.Env):
             #reset_high = np.array([self.ang, self.max_q1dot, self.wheel_max_speed])
             #self.state = np.random.uniform(low=-reset_high, high=reset_high)
             self.state = np.array([reset_angle_random, 0, 0], dtype=np.float32)
+            self.agent_state = np.array([abs(reset_angle_random), 0, 0], dtype=np.float32)
         else:
-            self.state = np.array([-self.ang, 0, 0], dtype=np.float32)
+            self.state = np.array([self.ang, 0, 0], dtype=np.float32)
+            self.agent_state = np.array([abs(self.ang), 0, 0], dtype=np.float32)
             # self.state = np.array([0, self.max_q1dot, 0],dtype=np.float32)
 
         #self.last_u = None
         self.last_torque = 0
 
-        print("state: ", self.state[0])
+        print("state: ", self.state)
+        #print("agent state: ", self.agent_state)
 
-        return self.state
+        return self.agent_state
 
 
     def render(self, eval_run):
@@ -153,7 +156,10 @@ class Pendulum(gym.Env):
         #g = self.gravity
         action_scale = self.max_torque
 
-        torque = action * action_scale
+        if q1 >= 0:
+            torque = action * action_scale
+        else:
+            torque = -action * action_scale
         torque = torque[0]
 
         Ip = self.Ip
@@ -168,6 +174,10 @@ class Pendulum(gym.Env):
 
         #state = np.array([q1[0], q1_dot[0], q2_dot[0]], dtype=np.float32)
         self.state = (q1, q1_dot, q2_dot)
+        if q1 >= 0:
+            self.agent_state = self.state
+        else:
+            self.agent_state = (-self.state[0], -self.state[1], -self.state[2])
 
         done = bool(
             q1 < -self.max_q1
@@ -200,8 +210,11 @@ class Pendulum(gym.Env):
 
         self.last_torque = torque
 
+        #print("state: ", self.state)
+        #print("agent state: ", self.agent_state)
+
         #return state, -costs, False, {}
-        return np.array(self.state, dtype=np.float32), -costs, done, {}
+        return np.array(self.agent_state, dtype=np.float32), -costs, done, {}
 
     def close(self):
         pygame.display.quit()
