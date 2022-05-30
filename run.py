@@ -6,13 +6,78 @@ import gym
 from collections import deque
 import torch
 import time
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 import argparse
 from files import MultiPro
 from files.Agent import Agent
 import json
-from Pendulum_v3_mirror import *  # added by Ben
+from Pendulum_v3 import *  # added by Ben
 import matplotlib.pyplot as plt
+import os
+
+
+def transient_response(state_action_log):
+    #print(np.shape(state_action_log)[0])
+    fig, axs = plt.subplots(4)
+    fig.suptitle('SAC Transient Response')
+    t = np.arange(0, eval_env.dt*np.shape(state_action_log)[0], eval_env.dt)
+    axs[0].plot(t[1:], state_action_log[1:,0])
+    axs[3].plot(t[1:], state_action_log[1:,1])
+    axs[1].plot(t[1:], state_action_log[1:,2])
+    axs[2].plot(t[1:], state_action_log[1:,3]*eval_env.max_torque)
+    axs[0].set_ylabel('q1(rad)')
+    axs[1].set_ylabel('q2 dot(rad/s)')
+    axs[2].set_ylabel('torque(Nm)')
+    axs[3].set_ylabel('q1 dot(rad/s)')
+    axs[2].set_xlabel('time(s)')
+    #axs[0].set_ylim([-0.01,0.06])
+    #axs[0].set_ylim([-pi-0.5,pi+0.5])
+    axs[1].set_ylim([-34,34])
+    #axs[2].set_ylim([-12,12])
+    plt.show()
+
+    print("e_ss=",state_action_log[-1,0])
+    print("u_ss=",state_action_log[-1,3]*eval_env.max_torque)
+    print("q1_min=",min(state_action_log[1:,0]))
+    print("q1_min_index=",np.argmin(state_action_log[1:,0]))
+    print("OS%=",min(state_action_log[1:,0])/(eval_env.ang*pi/180))
+    print("q1_a=", eval_env.ang*pi/180 * 0.9)
+    print("q1_b=", eval_env.ang*pi/180 * 0.1)
+    print("q1_c=", eval_env.ang*pi/180 * 0.1)
+    print("q1_d=", -eval_env.ang*pi/180 * 0.1)
+    min_a = 100
+    min_b = 100
+    min_c = 100
+    min_d = 100
+    t_a = 100
+    t_b = 100
+    t_c = 100
+    t_d = 100
+    for i in range(1,np.shape(state_action_log)[0]):
+        tr_a = eval_env.ang*pi/180 * 0.9
+        tr_b = eval_env.ang*pi/180 * 0.1
+        tr_c = eval_env.ang*pi/180 * 0.1
+        tr_d = -eval_env.ang*pi/180 * 0.1
+        diff_a = abs(state_action_log[i,0] - tr_a)
+        diff_b = abs(state_action_log[i,0] - tr_b)
+        diff_c = abs(state_action_log[i,0] - tr_c)
+        diff_d = abs(state_action_log[i,0] - tr_d)
+        if diff_a < min_a:
+            min_a = diff_a
+            t_a = i * eval_env.dt
+        if diff_b < min_b:
+            min_b = diff_b
+            t_b = i * eval_env.dt
+        if diff_c < min_c:
+            min_c = diff_c
+            t_c = i * eval_env.dt
+        if diff_d < min_d:
+            min_d = diff_d
+            t_d = i * eval_env.dt
+    print("[min_a, t_a, min_b, t_b]=",[min_a, t_a, min_b, t_b])
+    print("rising time=",t_b-t_a)
+    print("[min_c, t_c, min_d, t_d]=",[min_c, t_c, min_d, t_d])
+    print("settling time=",t_c,"or",t_d)
 
 
 def timer(start, end):
@@ -35,7 +100,7 @@ def evaluate(frame, args, eval_runs=5, capture=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset(saved=args.saved_model)
+        state = eval_env.reset(1000, saved=args.saved_model)
         rewards = 0
         rep = 0
         rep_max = args.rep_max
@@ -58,6 +123,8 @@ def evaluate(frame, args, eval_runs=5, capture=False):
             # action = np.clip(action, action_low, action_high) <- no need, already in range (-1,+1)
             state, reward, done, _ = eval_env.step(action[0])
 
+            #print(time.time())
+
             #print(np.asmatrix(state))
             #print(np.transpose(state))
             state_action = np.append(state, action[0])
@@ -73,72 +140,11 @@ def evaluate(frame, args, eval_runs=5, capture=False):
                 break
 
         if args.saved_model:
-            #print(np.shape(state_action_log)[0])
-            fig, axs = plt.subplots(4)
-            fig.suptitle('SAC Transient Response')
-            t = np.arange(0, eval_env.dt*np.shape(state_action_log)[0], eval_env.dt)
-            axs[0].plot(t[1:], state_action_log[1:,0])
-            axs[3].plot(t[1:], state_action_log[1:,1])
-            axs[1].plot(t[1:], state_action_log[1:,2])
-            axs[2].plot(t[1:], state_action_log[1:,3]*eval_env.max_torque)
-            axs[0].set_ylabel('q1(rad)')
-            axs[1].set_ylabel('q2 dot(rad/s)')
-            axs[2].set_ylabel('torque(Nm)')
-            axs[3].set_ylabel('q1 dot(rad/s)')
-            axs[2].set_xlabel('time(s)')
-            #axs[0].set_ylim([-0.01,0.06])
-            #axs[0].set_ylim([-pi-0.5,pi+0.5])
-            axs[1].set_ylim([-34,34])
-            #axs[2].set_ylim([-12,12])
-            plt.show()
-
-            print("e_ss=",state_action_log[-1,0])
-            print("u_ss=",state_action_log[-1,3]*eval_env.max_torque)
-            print("q1_min=",min(state_action_log[1:,0]))
-            print("q1_min_index=",np.argmin(state_action_log[1:,0]))
-            print("OS%=",min(state_action_log[1:,0])/(eval_env.ang*pi/180))
-            print("q1_a=", eval_env.ang*pi/180 * 0.9)
-            print("q1_b=", eval_env.ang*pi/180 * 0.1)
-            print("q1_c=", eval_env.ang*pi/180 * 0.1)
-            print("q1_d=", -eval_env.ang*pi/180 * 0.1)
-            min_a = 100
-            min_b = 100
-            min_c = 100
-            min_d = 100
-            t_a = 100
-            t_b = 100
-            t_c = 100
-            t_d = 100
-            for i in range(1,np.shape(state_action_log)[0]):
-                tr_a = eval_env.ang*pi/180 * 0.9
-                tr_b = eval_env.ang*pi/180 * 0.1
-                tr_c = eval_env.ang*pi/180 * 0.1
-                tr_d = -eval_env.ang*pi/180 * 0.1
-                diff_a = abs(state_action_log[i,0] - tr_a)
-                diff_b = abs(state_action_log[i,0] - tr_b)
-                diff_c = abs(state_action_log[i,0] - tr_c)
-                diff_d = abs(state_action_log[i,0] - tr_d)
-                if diff_a < min_a:
-                    min_a = diff_a
-                    t_a = i * eval_env.dt
-                if diff_b < min_b:
-                    min_b = diff_b
-                    t_b = i * eval_env.dt
-                if diff_c < min_c:
-                    min_c = diff_c
-                    t_c = i * eval_env.dt
-                if diff_d < min_d:
-                    min_d = diff_d
-                    t_d = i * eval_env.dt
-            print("[min_a, t_a, min_b, t_b]=",[min_a, t_a, min_b, t_b])
-            print("rising time=",t_b-t_a)
-            print("[min_c, t_c, min_d, t_d]=",[min_c, t_c, min_d, t_d])
-            print("settling time=",t_c,"or",t_d)
-
+            transient_response(state_action_log)
 
         reward_batch.append(rewards)
-    if capture == False and args.saved_model == False:
-        writer.add_scalar("Reward", np.mean(reward_batch), frame)
+    #if capture == False and args.saved_model == False:
+    #    writer.add_scalar("Reward", np.mean(reward_batch), frame)
 
 
 def run(args):
@@ -157,7 +163,7 @@ def run(args):
     scores = []  # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
-    state = envs.reset(saved=args.saved_model)
+    state = envs.reset(i_episode, saved=args.saved_model)
     score = 0
     frames = args.frames // args.worker
     eval_every = args.eval_every // args.worker
@@ -212,12 +218,16 @@ def run(args):
                     agent.ere_step(c_k)
             scores_window.append(score)  # save most recent score
             scores.append(score)  # save most recent score
-            writer.add_scalar("Average100", np.mean(scores_window), frame * worker)
+            #writer.add_scalar("Average100", np.mean(scores_window), frame * worker)
             print('\rEpisode {}\tFrame: [{}/{}]\t Reward: {:.2f} \tAverage100 Score: {:.2f}'.format(i_episode * worker, frame * worker, frames, score, np.mean(scores_window)), end="", flush=True)
+
+            log_f.write('{},{},{}\n'.format(i_episode, frame, np.mean(scores_window)))
+            log_f.flush()
+
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(saved=args.saved_model)
+            state = envs.reset(i_episode, saved=args.saved_model)
             score = 0
             episode_K = 0
 
@@ -268,8 +278,8 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
 
-    if args.saved_model == None:
-        writer = SummaryWriter("runs_v3/" + args.info + str(args.trial))
+    #if args.saved_model == None:
+    #    writer = SummaryWriter("runs_v3/" + args.info + str(args.trial))
     # envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     # eval_env = gym.make(args.env)
 
@@ -291,6 +301,28 @@ if __name__ == "__main__":
 
     agent = Agent(state_size=state_size, action_size=action_size, args=args, device=device)
 
+    ###################### logging ######################
+
+    #### log files for multiple runs are NOT overwritten
+    log_dir = "runs_v3"
+    if not os.path.exists(log_dir):
+          os.makedirs(log_dir)
+
+    log_dir = log_dir + f'/rwip{args.trial}/log'
+    if not os.path.exists(log_dir):
+          os.makedirs(log_dir)
+
+    current_num_files = next(os.walk(log_dir))[2]
+    run_num = len(current_num_files)
+
+    #### create new log file for each run
+    log_f_name = log_dir + f"/SAC_log_{run_num}.csv"
+    #print("current logging run number for " + env_name + " : ", run_num)
+    #print("logging at : " + log_f_name)
+    log_f = open(log_f_name,"w+")
+    log_f.write('episode,timestep,reward\n')
+    #####################################################
+
     t0 = time.time()
     if args.saved_model != None:
         agent.actor_local.load_state_dict(torch.load(args.saved_model, map_location=device))
@@ -302,12 +334,15 @@ if __name__ == "__main__":
 
         # save policy
         torch.save(agent.actor_local.state_dict(),
-                   'runs_v3/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".pth")
+                   'runs_v3/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + '_' + str(args.seed) + ".pth")
 
         # save parameter
-        with open('runs_v3/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + ".json", 'w') as f:
+        with open('runs_v3/{}{}/'.format(args.info, args.trial) + args.info + str(args.trial) + '_' + str(args.seed) + ".json", 'w') as f:
             json.dump(args.__dict__, f, indent=2)
 
+    envs.close()
     eval_env.close()
-    if args.saved_model == None:
-        writer.close()
+    log_f.close()
+
+    #if args.saved_model == None:
+    #    writer.close()
