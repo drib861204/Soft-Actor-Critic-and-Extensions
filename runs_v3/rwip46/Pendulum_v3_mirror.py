@@ -27,20 +27,20 @@ class Pendulum(gym.Env):
         self.theta_wheel = 0
         self.theta_rod_dot = 0
         self.theta_wheel_dot = 0
-        self.len_rod = 0.5
-        self.len_wheel = 0.48
-        self.mass_rod = 20
+        self.len_rod = 0.4
+        self.len_wheel = 0.45
+        self.mass_rod = 21.43
 
         #self.rad_out = 0.05
-        self.rad_out = 0.13# 0.105
-        self.rad_in = 0.065
+        self.rad_out = 0.09
+        #self.rad_in = 0.045
         #self.t = 0.01
-        self.t = 0.03
+        self.t = 0.01
         self.rho = 7870
         #self.mass_wheel = 0.23
         #self.momentum_wheel = 0.000329
-        self.mass_wheel = (self.rad_out**2-self.rad_in**2)*self.t*pi*self.rho
-        self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
+        self.mass_wheel = (self.rad_out**2)*self.t*pi*self.rho
+        self.momentum_wheel = self.mass_wheel*(self.rad_out**2)/2
 
         print(self.mass_wheel)
         print(self.momentum_wheel)
@@ -48,11 +48,11 @@ class Pendulum(gym.Env):
         self.momentum_rod = 0.95
         self.dt = 0.005
         self.gravity = 9.81
-        self.max_q1 = 5*pi/180 # stop training below this angle
-        self.max_q1dot = 1 #initial q1_dot default 0.3? to be verified
+        self.max_q1 = 15*pi/180 # stop training below this angle
+        self.max_q1dot = 0.3 #initial q1_dot default 0.3? to be verified
 
         #self.wheel_max_speed = 20
-        self.wheel_max_speed = 20
+        self.wheel_max_speed = 25
         #self.max_torque = 20
         self.max_torque = 15
 
@@ -62,7 +62,7 @@ class Pendulum(gym.Env):
         self.Ip = self.mass_rod*self.len_rod**2+self.mass_wheel*self.len_wheel**2+self.momentum_rod+self.momentum_wheel
         self.mbarg = (self.mass_rod*self.len_rod+self.mass_wheel*self.len_wheel)*self.gravity
 
-        high = np.array([self.max_q1, self.max_q1dot, self.wheel_max_speed], dtype=np.float32)
+        high = np.array([2*self.max_q1, self.max_q1dot, self.wheel_max_speed], dtype=np.float32)
         low = np.array([0, -self.max_q1dot, -self.wheel_max_speed], dtype=np.float32)
         self.action_space = spaces.Box(low=-self.max_torque, high=self.max_torque, shape=(1,), dtype=np.float32)
         self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
@@ -87,14 +87,14 @@ class Pendulum(gym.Env):
             #print("font")
 
 
-    def reset(self, saved, curriculum_numerator=1000):
+    def reset(self, curriculum_numerator, saved):
         # self.state is for render, self.agent_state is for training
 
-        self.ang = 1*pi/180 # reset angle
+        self.ang = 4*pi/180 # reset angle
 
-        '''curriculum_denominator = 15
+        curriculum_denominator = 15
         if curriculum_numerator < curriculum_denominator:
-            self.ang = self.ang * curriculum_numerator / curriculum_denominator'''
+            self.ang = self.ang * curriculum_numerator / curriculum_denominator
 
         if saved == None:
             reset_angle_random = np.random.uniform(low=-self.ang, high=self.ang)
@@ -103,7 +103,7 @@ class Pendulum(gym.Env):
             self.state = np.array([reset_angle_random, 0, 0], dtype=np.float32)
             self.agent_state = np.array([abs(reset_angle_random), 0, 0], dtype=np.float32)
         else:
-            self.state = np.array([self.ang, 0, 0], dtype=np.float32)
+            self.state = np.array([-self.ang, 0, 0], dtype=np.float32)
             self.agent_state = np.array([abs(self.ang), 0, 0], dtype=np.float32)
             # self.state = np.array([0, self.max_q1dot, 0],dtype=np.float32)
 
@@ -169,8 +169,8 @@ class Pendulum(gym.Env):
             torque = -action * action_scale
         torque = torque[0]
 
-        #if q2_dot >= self.wheel_max_speed or q2_dot <= -self.wheel_max_speed:
-        #    torque = 0
+        if q2_dot >= self.wheel_max_speed or q2_dot <= -self.wheel_max_speed:
+            torque = 0
 
         Ip = self.Ip
         a = self.mbarg*sin(q1)
@@ -202,10 +202,7 @@ class Pendulum(gym.Env):
         self.theta_wheel_dot = q2_dot
         self.torque = torque
 
-        # costs = 100 * q1 ** 2
-        # costs = q1_dot ** 2
         costs = 100 * q1 ** 2 + 1 * q1_dot ** 2
-        # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2
         # costs = 1000 * q1 ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
         # costs = 1000 * q1 ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
         # costs = 100 * q1 ** 2 + 0.00001 * q2_dot ** 2

@@ -100,7 +100,7 @@ def evaluate(frame, args, eval_runs=5, capture=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset(saved=args.saved_model)
+        state = eval_env.reset(1000, saved=args.saved_model)
         rewards = 0
         rep = 0
         rep_max = args.rep_max
@@ -119,20 +119,15 @@ def evaluate(frame, args, eval_runs=5, capture=False):
                 # eval_env.render(mode="human")
                 eval_env.render(i + 1)
 
-            if eval_env.theta_wheel_dot >= eval_env.wheel_max_speed or eval_env.theta_wheel_dot <= -eval_env.wheel_max_speed:
-                action = np.array([[0]])
-            else:
-                action = agent.act(np.expand_dims(state, axis=0), eval=True)
-            print(action)
+            action = agent.act(np.expand_dims(state, axis=0), eval=True)
             # action = np.clip(action, action_low, action_high) <- no need, already in range (-1,+1)
             state, reward, done, _ = eval_env.step(action[0])
-            state_for_render = eval_env.state
 
             #print(time.time())
 
             #print(np.asmatrix(state))
             #print(np.transpose(state))
-            state_action = np.append(state_for_render, action[0])
+            state_action = np.append(state, action[0])
             #print(state_action)
             state_action_log = np.concatenate((state_action_log,np.asmatrix(state_action)),axis=0)
             #print(state_action_log)
@@ -168,7 +163,7 @@ def run(args):
     scores = []  # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
-    state = envs.reset(saved=args.saved_model)
+    state = envs.reset(1000, saved=args.saved_model)
     score = 0
     frames = args.frames // args.worker
     eval_every = args.eval_every // args.worker
@@ -192,12 +187,7 @@ def run(args):
         #if frame % eval_every == 0 or frame == 1:
         #    evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
 
-        if envs.theta_wheel_dot >= envs.wheel_max_speed or envs.theta_wheel_dot <= -envs.wheel_max_speed:
-            action = np.array([0])
-            #print(action)
-        else:
-            action = agent.act(state)
-        #print(type(action))
+        action = agent.act(state)
         #action = np.clip(action, action_low, action_high) <- no need, already in range (-1,+1)
         next_state, reward, done, _ = envs.step(action)  # returns np.stack(obs), np.stack(action) ...
         '''
@@ -237,7 +227,7 @@ def run(args):
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(saved=args.saved_model)
+            state = envs.reset(1000, saved=args.saved_model)
             score = 0
             episode_K = 0
 
