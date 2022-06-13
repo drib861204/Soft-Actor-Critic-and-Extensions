@@ -28,7 +28,7 @@ class Pendulum(gym.Env):
         self.theta_rod_dot = 0
         self.theta_wheel_dot = 0
         self.len_rod = 0.5
-        self.len_wheel = 0.48
+        self.len_wheel = 0.5
         self.mass_rod = 20
 
         #self.rad_out = 0.05
@@ -37,13 +37,13 @@ class Pendulum(gym.Env):
         #self.t = 0.01
         self.t = 0.03
         self.rho = 7870
-        #self.mass_wheel = 0.23
-        #self.momentum_wheel = 0.000329
-        self.mass_wheel = (self.rad_out**2-self.rad_in**2)*self.t*pi*self.rho
-        self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
+        self.mass_wheel = 5.0295
+        self.momentum_wheel = 0.0654
+        #self.mass_wheel = (self.rad_out**2-self.rad_in**2)*self.t*pi*self.rho
+        #self.momentum_wheel = self.mass_wheel*(self.rad_out**2+self.rad_in**2)/2
 
-        print(self.mass_wheel)
-        print(self.momentum_wheel)
+        #print(self.mass_wheel)
+        #print(self.momentum_wheel)
 
         self.momentum_rod = 0.95
         self.dt = 0.005
@@ -52,9 +52,9 @@ class Pendulum(gym.Env):
         self.max_q1dot = 1 #initial q1_dot default 0.3? to be verified
 
         #self.wheel_max_speed = 20
-        self.wheel_max_speed = 20
+        self.wheel_max_speed = 30 # not fixed
         #self.max_torque = 20
-        self.max_torque = 15
+        self.max_torque = 21
 
         self.torque = 0
         self.last_torque = 0
@@ -179,7 +179,7 @@ class Pendulum(gym.Env):
         q1 = angle_normalize(q1 + q1_dot * dt)
 
         q2_dot = q2_dot + ((torque*Ip-a*I2)/I2/(Ip-I2))*dt
-        q2_dot = np.clip(q2_dot, -self.wheel_max_speed, self.wheel_max_speed)
+        #q2_dot = np.clip(q2_dot, -self.wheel_max_speed, self.wheel_max_speed)
         q2 = angle_normalize(angle_normalize(q2) + q2_dot * dt)
 
         #state = np.array([q1[0], q1_dot[0], q2_dot[0]], dtype=np.float32)

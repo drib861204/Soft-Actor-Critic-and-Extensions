@@ -119,11 +119,12 @@ def evaluate(frame, args, eval_runs=5, capture=False):
                 # eval_env.render(mode="human")
                 eval_env.render(i + 1)
 
-            if eval_env.theta_wheel_dot >= eval_env.wheel_max_speed or eval_env.theta_wheel_dot <= -eval_env.wheel_max_speed:
+            wheel_max_speed_ = -0.85 * abs(eval_env.torque) + 28.27
+            if state[2] >= wheel_max_speed_ or state[2] <= -wheel_max_speed_:
                 action = np.array([[0]])
             else:
                 action = agent.act(np.expand_dims(state, axis=0), eval=True)
-            print(action)
+            # print(action)
             # action = np.clip(action, action_low, action_high) <- no need, already in range (-1,+1)
             state, reward, done, _ = eval_env.step(action[0])
             state_for_render = eval_env.state
@@ -192,7 +193,8 @@ def run(args):
         #if frame % eval_every == 0 or frame == 1:
         #    evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
 
-        if envs.theta_wheel_dot >= envs.wheel_max_speed or envs.theta_wheel_dot <= -envs.wheel_max_speed:
+        wheel_max_speed_ = -0.85*abs(envs.torque)+28.27
+        if state[2] >= wheel_max_speed_ or state[2] <= -wheel_max_speed_:
             action = np.array([0])
             #print(action)
         else:
