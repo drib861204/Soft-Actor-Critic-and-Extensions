@@ -114,7 +114,7 @@ def save_graph():
     ax.set_xlabel("Timesteps", fontsize=12)
     ax.set_ylabel("Rewards", fontsize=12)
 
-    plt.title(env_name, fontsize=14)
+    plt.title("SAC "+env_name, fontsize=14)
 
     fig = plt.gcf()
     fig.set_size_inches(fig_width, fig_height)
