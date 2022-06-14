@@ -34,6 +34,7 @@ def transient_response(state_action_log):
     #axs[0].set_ylim([-pi-0.5,pi+0.5])
     axs[1].set_ylim([-34,34])
     #axs[2].set_ylim([-12,12])
+    plt.savefig(f"runs_v3/rwip{args.trial}/fig/response{args.seed}")
     plt.show()
 
     print("e_ss=",state_action_log[-1,0])
@@ -337,7 +338,7 @@ if __name__ == "__main__":
 
     t0 = time.time()
     if args.saved_model != None:
-        agent.actor_local.load_state_dict(torch.load(args.saved_model, map_location=device))
+        agent.actor_local.load_state_dict(torch.load(f"runs_v3/rwip{args.trial}/rwip{args.trial}_{args.seed}.pth", map_location=device))
         evaluate(frame=None, args=args, capture=False)
     else:
         run(args)
