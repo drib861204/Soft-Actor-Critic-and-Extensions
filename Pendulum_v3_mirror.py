@@ -92,9 +92,9 @@ class Pendulum(gym.Env):
 
         self.ang = 1*pi/180 # reset angle
 
-        '''curriculum_denominator = 15
+        curriculum_denominator = 15
         if curriculum_numerator < curriculum_denominator:
-            self.ang = self.ang * curriculum_numerator / curriculum_denominator'''
+            self.ang = self.ang * curriculum_numerator / curriculum_denominator
 
         if saved == None:
             reset_angle_random = np.random.uniform(low=-self.ang, high=self.ang)
@@ -204,9 +204,9 @@ class Pendulum(gym.Env):
 
         # costs = 100 * q1 ** 2
         # costs = q1_dot ** 2
-        costs = 100 * q1 ** 2 + 1 * q1_dot ** 2
+        # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2
         # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2
-        # costs = 1000 * q1 ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2
+        costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * torque ** 2
         # costs = 1000 * q1 ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
         # costs = 100 * q1 ** 2 + 0.00001 * q2_dot ** 2
         # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 100 * torque ** 2 + 0.001 * q2_dot ** 2

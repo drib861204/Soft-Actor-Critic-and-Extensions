@@ -315,26 +315,26 @@ if __name__ == "__main__":
     agent = Agent(state_size=state_size, action_size=action_size, args=args, device=device)
 
     ###################### logging ######################
+    if args.saved_model == None:
+        #### log files for multiple runs are NOT overwritten
+        log_dir = "runs_v3"
+        if not os.path.exists(log_dir):
+              os.makedirs(log_dir)
 
-    #### log files for multiple runs are NOT overwritten
-    log_dir = "runs_v3"
-    if not os.path.exists(log_dir):
-          os.makedirs(log_dir)
+        log_dir = log_dir + f'/rwip{args.trial}/log'
+        if not os.path.exists(log_dir):
+              os.makedirs(log_dir)
 
-    log_dir = log_dir + f'/rwip{args.trial}/log'
-    if not os.path.exists(log_dir):
-          os.makedirs(log_dir)
+        current_num_files = next(os.walk(log_dir))[2]
+        run_num = len(current_num_files)
 
-    current_num_files = next(os.walk(log_dir))[2]
-    run_num = len(current_num_files)
-
-    #### create new log file for each run
-    log_f_name = log_dir + f"/SAC_log_{run_num}.csv"
-    #print("current logging run number for " + env_name + " : ", run_num)
-    #print("logging at : " + log_f_name)
-    log_f = open(log_f_name,"w+")
-    log_f.write('episode,timestep,reward\n')
-    #####################################################
+        #### create new log file for each run
+        log_f_name = log_dir + f"/SAC_log_{run_num}.csv"
+        #print("current logging run number for " + env_name + " : ", run_num)
+        #print("logging at : " + log_f_name)
+        log_f = open(log_f_name,"w+")
+        log_f.write('episode,timestep,reward\n')
+        #####################################################
 
     t0 = time.time()
     if args.saved_model != None:
