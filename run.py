@@ -1,14 +1,11 @@
 import numpy as np
 import random
 import gym
-# import pybulletgym # to run e.g. HalfCheetahPyBullet-v0
-# import pybullet_envs # to run e.g. HalfCheetahBullet-v0 different reward function bullet-v0 starts ~ -1500. pybullet-v0 starts at 0
 from collections import deque
 import torch
 import time
 #from torch.utils.tensorboard import SummaryWriter
 import argparse
-from files import MultiPro
 from files.Agent import Agent
 import json
 from Pendulum_v3_mirror import *  # added by Ben
@@ -17,10 +14,9 @@ import os
 
 
 def transient_response(state_action_log):
-    #print(np.shape(state_action_log)[0])
     fig, axs = plt.subplots(4)
     fig.suptitle('SAC Transient Response')
-    t = np.arange(0, eval_env.dt*np.shape(state_action_log)[0], eval_env.dt)
+    t = np.linspace(0, eval_env.dt*(state_action_log.shape[0]-1), state_action_log.shape[0])
     axs[0].plot(t[1:], state_action_log[1:,0])
     axs[3].plot(t[1:], state_action_log[1:,1])
     axs[1].plot(t[1:], state_action_log[1:,2])
@@ -110,7 +106,6 @@ def evaluate(frame, args, eval_runs=5, capture=False):
             rep_max = time_duration/eval_env.dt
 
         while True:
-
             # print("eval")
             # print(rend)
             rep += 1
