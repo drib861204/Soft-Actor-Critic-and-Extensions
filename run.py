@@ -115,8 +115,7 @@ def evaluate(frame, args, eval_runs=5, capture=False):
                 # eval_env.render(mode="human")
                 eval_env.render(i + 1)
 
-            wheel_max_speed_ = -0.85 * abs(eval_env.torque) + 28.27
-            if state[2] >= wheel_max_speed_ or state[2] <= -wheel_max_speed_:
+            if state[2] >= eval_env.wheel_max_speed or state[2] <= -eval_env.wheel_max_speed:
                 action = np.array([[0]])
             else:
                 action = agent.act(np.expand_dims(state, axis=0), eval=True)
@@ -189,8 +188,7 @@ def run(args):
         #if frame % eval_every == 0 or frame == 1:
         #    evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
 
-        wheel_max_speed_ = -0.85*abs(envs.torque)+28.27
-        if state[2] >= wheel_max_speed_ or state[2] <= -wheel_max_speed_:
+        if state[2] >= envs.wheel_max_speed or state[2] <= -envs.wheel_max_speed:
             action = np.array([0])
             #print(action)
         else:
@@ -229,7 +227,7 @@ def run(args):
             #writer.add_scalar("Average100", np.mean(scores_window), frame * worker)
             print('\rEpisode {}\tFrame: [{}/{}]\t Reward: {:.2f} \tAverage100 Score: {:.2f}'.format(i_episode * worker, frame * worker, frames, score, np.mean(scores_window)), end="", flush=True)
 
-            log_f.write('{},{},{}\n'.format(i_episode, frame, np.mean(scores_window)))
+            log_f.write('{},{},{}\n'.format(i_episode, frame, np.mean(scores_window), score))
             log_f.flush()
 
             # if i_episode % 100 == 0:
@@ -328,7 +326,7 @@ if __name__ == "__main__":
         #print("current logging run number for " + env_name + " : ", run_num)
         #print("logging at : " + log_f_name)
         log_f = open(log_f_name,"w+")
-        log_f.write('episode,timestep,reward\n')
+        log_f.write('episode,timestep,reward,raw_reward\n')
         #####################################################
 
     t0 = time.time()

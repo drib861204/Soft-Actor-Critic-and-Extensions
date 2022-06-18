@@ -45,7 +45,7 @@ def save_graph():
     if not os.path.exists(figures_dir):
         os.makedirs(figures_dir)
 
-    fig_save_path = figures_dir + 'SAC_fig.png'
+    fig_save_path = figures_dir + 'SAC_fig_test.png'
 
     # get number of log files in directory
     log_dir = 'runs_v3/' + f'rwip{args.trial}' + '/log'
@@ -93,8 +93,9 @@ def save_graph():
             run['reward_var_' + str(i)] = run['reward'].rolling(window=window_len_var, win_type='triang', min_periods=min_window_len_var).mean()
 
             # plot the lines
-            run.plot(kind='line', x='timestep' , y='reward_smooth_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_smooth, alpha=alpha_smooth)
-            run.plot(kind='line', x='timestep' , y='reward_var_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_var, alpha=alpha_var)
+            run.plot(kind='line', x='timestep', y='reward_smooth_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_smooth, alpha=alpha_smooth)
+            run.plot(kind='line', x='timestep', y='reward_var_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_var, alpha=alpha_var)
+            run.plot(kind='line', x='timestep', y='reward', ax=ax, color=colors[i % len(colors)], linewidth=0.5, alpha=1)
 
         # keep alternate elements (reward_smooth_i) in the legend
         handles, labels = ax.get_legend_handles_labels()
