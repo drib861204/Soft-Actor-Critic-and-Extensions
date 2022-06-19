@@ -91,15 +91,27 @@ def save_graph():
 
     else:
         for i, run in enumerate(all_runs):
+            #----------create raw reward------------#
+            #run['raw_reward'] = run['reward']*0
+            #sum_tmp = 0
+            #for j in range(run.shape[0]):
+            #    if j >= 100:
+            #        run['raw_reward'][j] = run['reward'][j] * 100 - sum_tmp
+            #    else:
+            #        run['raw_reward'][j] = run['reward'][j] * (j + 1) - sum_tmp
+            #    sum_tmp += run['raw_reward'][j]
+            #    if j >= 99:
+            #        sum_tmp -= run['raw_reward'][j - 99]
+            #---------------------------------------#
+
             # smooth out rewards to get a smooth and a less smooth (var) plot lines
-            run['reward_smooth_' + str(i)] = run['reward'].rolling(window=window_len_smooth, win_type='triang', min_periods=min_window_len_smooth).mean()
-            run['reward_var_' + str(i)] = run['reward'].rolling(window=window_len_var, win_type='triang', min_periods=min_window_len_var).mean()
+            run['reward_smooth_' + str(i)] = run['raw_reward'].rolling(window=30, win_type='triang', min_periods=min_window_len_smooth).mean()
+            run['reward_var_' + str(i)] = run['raw_reward'].rolling(window=window_len_var, win_type='triang', min_periods=min_window_len_var).mean()
 
             # plot the lines
             run.plot(kind='line', x='timestep', y='reward_smooth_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_smooth, alpha=alpha_smooth)
-            run.plot(kind='line', x='timestep', y='reward_var_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_var, alpha=alpha_var)
-            #run.plot(kind='line', x='timestep', y='raw_reward', ax=ax, color=colors[i % len(colors)], linewidth=0.5, alpha=1)
-            run.plot(kind='line', x='timestep', y='reward', ax=ax, color=colors[i % len(colors)], linewidth=0.5, alpha=1)
+            #run.plot(kind='line', x='timestep', y='reward_var_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_var, alpha=alpha_var)
+            run.plot(kind='line', x='timestep', y='raw_reward', ax=ax, color=colors[i % len(colors)], linewidth=linewidth_var, alpha=alpha_var)
 
         # keep alternate elements (reward_smooth_i) in the legend
         handles, labels = ax.get_legend_handles_labels()

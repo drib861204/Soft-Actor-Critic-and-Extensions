@@ -253,7 +253,7 @@ parser.add_argument("-n_step", type=int, default=1, help="Using n-step bootstrap
 parser.add_argument("-info", type=str, default="rwip", help="Information or name of the run")
 parser.add_argument("-d2rl", type=int, choices=[0, 1], default=0,
                     help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
-parser.add_argument("-frames", type=int, default=50000,
+parser.add_argument("-frames", type=int, default=100000,
                     help="The amount of training interactions with the environment, default is 1mio")
 parser.add_argument("-eval_every", type=int, default=1000,
                     help="Number of interactions after which the evaluation runs are performed, default = 1000")
@@ -261,9 +261,9 @@ parser.add_argument("-eval_runs", type=int, default=3, help="Number of evaluatio
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
 parser.add_argument("--n_updates", type=int, default=1,
                     help="Update-to-Data (UTD) ratio, updates taken per step with the environment, default=1")
-parser.add_argument("-lr_a", type=float, default=3e-4,
+parser.add_argument("-lr_a", type=float, default=2e-3,
                     help="Actor learning rate of adapting the network weights, default is 3e-4")
-parser.add_argument("-lr_c", type=float, default=3e-4,
+parser.add_argument("-lr_c", type=float, default=2e-3,
                     help="Critic learning rate of adapting the network weights, default is 3e-4")
 parser.add_argument("-a", "--alpha", type=float,
                     help="entropy alpha value, if not choosen the value is leaned by the agent")
@@ -280,6 +280,7 @@ parser.add_argument("-r", "--render_evals", type=int, default=0, choices=[0, 1],
                     help="Rendering the evaluation runs if set to 1, default=0")
 parser.add_argument("--trial", type=int, default=0, help="trial")
 parser.add_argument("--rep_max", type=int, default=500, help="maximum steps in one episode")
+parser.add_argument("-w_tau", type=float, default=0.0001, help="torque reward weight")
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -289,8 +290,10 @@ if __name__ == "__main__":
     # envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
     # eval_env = gym.make(args.env)
 
-    envs = Pendulum(args.render_evals)
-    eval_env = Pendulum(args.render_evals)
+    #envs = Pendulum(args.render_evals)
+    #eval_env = Pendulum(args.render_evals)
+    envs = Pendulum(args.render_evals, args.w_tau)
+    eval_env = Pendulum(args.render_evals, args.w_tau)
 
     #envs.seed=args.seed
     #eval_env.seed=args.seed+1
@@ -312,11 +315,11 @@ if __name__ == "__main__":
         #### log files for multiple runs are NOT overwritten
         log_dir = "runs_v3"
         if not os.path.exists(log_dir):
-              os.makedirs(log_dir)
+            os.makedirs(log_dir)
 
         log_dir = log_dir + f'/rwip{args.trial}/log'
         if not os.path.exists(log_dir):
-              os.makedirs(log_dir)
+            os.makedirs(log_dir)
 
         current_num_files = next(os.walk(log_dir))[2]
         run_num = len(current_num_files)
