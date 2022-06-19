@@ -45,7 +45,10 @@ def save_graph():
     if not os.path.exists(figures_dir):
         os.makedirs(figures_dir)
 
-    fig_save_path = figures_dir + 'SAC_fig_test.png'
+    current_num_files = next(os.walk(figures_dir))[2]
+    num_runs = len(current_num_files)
+
+    fig_save_path = figures_dir + f'SAC_fig_{num_runs}.png'
 
     # get number of log files in directory
     log_dir = 'runs_v3/' + f'rwip{args.trial}' + '/log'
@@ -95,6 +98,7 @@ def save_graph():
             # plot the lines
             run.plot(kind='line', x='timestep', y='reward_smooth_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_smooth, alpha=alpha_smooth)
             run.plot(kind='line', x='timestep', y='reward_var_' + str(i),ax=ax,color=colors[i % len(colors)],  linewidth=linewidth_var, alpha=alpha_var)
+            #run.plot(kind='line', x='timestep', y='raw_reward', ax=ax, color=colors[i % len(colors)], linewidth=0.5, alpha=1)
             run.plot(kind='line', x='timestep', y='reward', ax=ax, color=colors[i % len(colors)], linewidth=0.5, alpha=1)
 
         # keep alternate elements (reward_smooth_i) in the legend
@@ -125,7 +129,7 @@ def save_graph():
     print("figure saved at : ", fig_save_path)
     print("============================================================================================")
     
-    plt.show()
+    #plt.show()
 
 
 if __name__ == '__main__':

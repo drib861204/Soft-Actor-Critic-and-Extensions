@@ -227,7 +227,7 @@ def run(args):
             #writer.add_scalar("Average100", np.mean(scores_window), frame * worker)
             print('\rEpisode {}\tFrame: [{}/{}]\t Reward: {:.2f} \tAverage100 Score: {:.2f}'.format(i_episode * worker, frame * worker, frames, score, np.mean(scores_window)), end="", flush=True)
 
-            log_f.write('{},{},{}\n'.format(i_episode, frame, np.mean(scores_window), score))
+            log_f.write('{},{},{},{}\n'.format(i_episode, frame, np.mean(scores_window), score))
             log_f.flush()
 
             # if i_episode % 100 == 0:
