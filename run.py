@@ -89,7 +89,7 @@ def evaluate(frame, args, eval_runs=5, capture=False):
     Makes an evaluation run with the current episode
     """
 
-    reward_batch = []
+    #reward_batch = []
 
     for i in range(eval_runs):
 
@@ -137,13 +137,12 @@ def evaluate(frame, args, eval_runs=5, capture=False):
 
             rewards += reward
             if done or rep >= rep_max:
-                rep = 0
                 break
 
         if args.saved_model:
             transient_response(state_action_log)
 
-        reward_batch.append(rewards)
+        #reward_batch.append(rewards)
     #if capture == False and args.saved_model == False:
     #    writer.add_scalar("Reward", np.mean(reward_batch), frame)
 
@@ -281,6 +280,7 @@ parser.add_argument("-r", "--render_evals", type=int, default=0, choices=[0, 1],
 parser.add_argument("--trial", type=int, default=0, help="trial")
 parser.add_argument("--rep_max", type=int, default=500, help="maximum steps in one episode")
 parser.add_argument("-w_tau", type=float, default=0.0001, help="torque reward weight")
+parser.add_argument("-w_speed", type=float, default=0.0001, help="wheel speed reward weight")
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -292,8 +292,8 @@ if __name__ == "__main__":
 
     #envs = Pendulum(args.render_evals)
     #eval_env = Pendulum(args.render_evals)
-    envs = Pendulum(args.render_evals, args.w_tau)
-    eval_env = Pendulum(args.render_evals, args.w_tau)
+    envs = Pendulum(args.render_evals, args.w_speed)
+    eval_env = Pendulum(args.render_evals, args.w_speed)
 
     #envs.seed=args.seed
     #eval_env.seed=args.seed+1
