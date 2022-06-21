@@ -31,7 +31,7 @@ def transient_response(state_action_log):
     axs[1].set_ylim([-34,34])
     #axs[2].set_ylim([-12,12])
     plt.savefig(f"runs_v3/rwip{args.trial}/fig/response{args.seed}")
-    plt.show()
+    #plt.show()
 
     print("e_ss=",state_action_log[-1,0])
     print("u_ss=",state_action_log[-1,3]*eval_env.max_torque)
@@ -84,7 +84,7 @@ def timer(start, end):
     print("\nTraining Time:  {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
 
 
-def evaluate(frame, args, eval_runs=5, capture=False):
+def evaluate(frame, args, eval_runs=1, capture=False):
     """
     Makes an evaluation run with the current episode
     """
