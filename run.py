@@ -292,8 +292,8 @@ if __name__ == "__main__":
 
     #envs = Pendulum(args.render_evals)
     #eval_env = Pendulum(args.render_evals)
-    envs = Pendulum(args.render_evals, args.w_speed)
-    eval_env = Pendulum(args.render_evals, args.w_speed)
+    envs = Pendulum(args.render_evals, args.w_tau)
+    eval_env = Pendulum(args.render_evals, args.w_tau)
 
     #envs.seed=args.seed
     #eval_env.seed=args.seed+1
