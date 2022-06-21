@@ -163,9 +163,9 @@ def run(args):
     scores = []  # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
     i_episode = 1
-    state = envs.reset(saved=args.saved_model)
-    score = 0
     frames = args.frames // args.worker
+    state = envs.reset(saved=args.saved_model, frame=0)
+    score = 0
     eval_every = args.eval_every // args.worker
     eval_runs = args.eval_runs
     worker = args.worker
@@ -232,7 +232,7 @@ def run(args):
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(saved=args.saved_model)
+            state = envs.reset(saved=args.saved_model, frame=frame)
             score = 0
             episode_K = 0
 
@@ -281,6 +281,7 @@ parser.add_argument("--trial", type=int, default=0, help="trial")
 parser.add_argument("--rep_max", type=int, default=500, help="maximum steps in one episode")
 parser.add_argument("-w_tau", type=float, default=0.0001, help="torque reward weight")
 parser.add_argument("-w_speed", type=float, default=0.0001, help="wheel speed reward weight")
+parser.add_argument("--interval_num", type=int, default=100, help="Curriculum Learning interval number")
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -292,8 +293,8 @@ if __name__ == "__main__":
 
     #envs = Pendulum(args.render_evals)
     #eval_env = Pendulum(args.render_evals)
-    envs = Pendulum(args.render_evals, args.w_tau)
-    eval_env = Pendulum(args.render_evals, args.w_tau)
+    envs = Pendulum(args.render_evals, args.frames, args.interval_num)
+    eval_env = Pendulum(args.render_evals, args.frames, args.interval_num)
 
     #envs.seed=args.seed
     #eval_env.seed=args.seed+1

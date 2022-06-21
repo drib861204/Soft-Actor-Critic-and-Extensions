@@ -21,7 +21,9 @@ from gym import spaces, logger
 
 
 class Pendulum(gym.Env):
-    def __init__(self, rend, w_tau):
+    def __init__(self, rend, frames, interval_num, w_tau=0):
+        self.frames = frames
+        self.interval_num = interval_num
         self.weight_tau = w_tau
 
         self.theta_rod = 0
@@ -86,16 +88,16 @@ class Pendulum(gym.Env):
             #print("font")
 
 
-    def reset(self, saved, curriculum_numerator=1000):
+    def reset(self, saved, frame=0):
         # self.state is for render, self.agent_state is for training
 
         self.ang = 2*pi/180 # reset angle
 
-        curriculum_denominator = 15
-        if curriculum_numerator < curriculum_denominator:
-            self.ang = self.ang * curriculum_numerator / curriculum_denominator
-
         if saved == None:
+            interval = self.frames//self.interval_num
+            self.ang *= ((frame//interval)+1)/self.interval_num
+            print(interval, self.ang)
+
             reset_angle_random = np.random.uniform(low=-self.ang, high=self.ang)
             #reset_high = np.array([self.ang, self.max_q1dot, self.wheel_max_speed])
             #self.state = np.random.uniform(low=-reset_high, high=reset_high)
@@ -204,9 +206,9 @@ class Pendulum(gym.Env):
         # costs = 100 * q1 ** 2
         # costs = q1_dot ** 2
         # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2
-        # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + self.weight_tau * (self.last_torque - torque) ** 2
+        costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2
         # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2 + self.weight_speed * q2_dot**2
-        costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2 + self.weight_tau * torque**2
+        # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 0.0001 * (self.last_torque - torque) ** 2 + self.weight_tau * torque**2
         # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + self.weight_tau * torque ** 2
         # costs = 1000 * q1 ** 2 + 0.1 * q1_dot ** 2 + 0.001 * torque ** 2 + 0.00001 * q2_dot**2
         # costs = 100 * q1 ** 2 + 0.00001 * q2_dot ** 2
