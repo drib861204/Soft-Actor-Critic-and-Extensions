@@ -24,6 +24,7 @@ class Pendulum(gym.Env):
     def __init__(self, rend, frames, interval_num, w_tau=0):
         self.frames = frames
         self.interval_num = interval_num
+        self.cur_case = 1
         self.weight_tau = w_tau
 
         self.theta_rod = 0
@@ -88,15 +89,17 @@ class Pendulum(gym.Env):
             #print("font")
 
 
-    def reset(self, saved, frame=0):
+    def reset(self, saved, avg_reward=-1000):
         # self.state is for render, self.agent_state is for training
 
         self.ang = 2*pi/180 # reset angle
 
         if saved == None:
-            interval = self.frames//self.interval_num
-            self.ang *= ((frame//interval)+1)/self.interval_num
-            print(interval, self.ang)
+            #interval = self.frames//self.interval_num
+            if avg_reward > -50:
+                self.cur_case += 1
+            self.ang *= (self.cur_case)/self.interval_num
+            #print(interval, self.ang)
 
             reset_angle_random = np.random.uniform(low=-self.ang, high=self.ang)
             #reset_high = np.array([self.ang, self.max_q1dot, self.wheel_max_speed])

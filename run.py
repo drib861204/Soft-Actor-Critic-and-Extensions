@@ -161,10 +161,10 @@ def run(args):
         eps_decay (float): multiplicative factor (per episode) for decreasing epsilon
     """
     scores = []  # list containing scores from each episode
-    scores_window = deque(maxlen=100)  # last 100 scores
+    scores_window = deque(maxlen=30)  # last 100 scores
     i_episode = 1
     frames = args.frames // args.worker
-    state = envs.reset(saved=args.saved_model, frame=0)
+    state = envs.reset(saved=args.saved_model)
     score = 0
     eval_every = args.eval_every // args.worker
     eval_runs = args.eval_runs
@@ -232,7 +232,7 @@ def run(args):
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(saved=args.saved_model, frame=frame)
+            state = envs.reset(saved=args.saved_model, avg_reward=np.mean(scores_window))
             score = 0
             episode_K = 0
 
