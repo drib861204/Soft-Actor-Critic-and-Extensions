@@ -352,7 +352,8 @@ if __name__ == "__main__":
 
     envs.close()
     eval_env.close()
-    log_f.close()
+    if args.saved_model == None:
+        log_f.close()
 
     #if args.saved_model == None:
     #    writer.close()
