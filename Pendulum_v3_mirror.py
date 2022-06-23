@@ -97,10 +97,10 @@ class Pendulum(gym.Env):
 
         if saved == None:
             #interval = self.frames//self.interval_num
-            if avg_reward > -50:
+            '''if avg_reward > -50:
                 self.cur_case += 1
             self.ang *= (self.cur_case)/self.interval_num
-            #print(interval, self.ang)
+            #print(interval, self.ang)'''
 
             reset_angle_random = np.random.uniform(low=self.low_ang, high=self.ang)
             #reset_high = np.array([self.ang, self.max_q1dot, self.wheel_max_speed])

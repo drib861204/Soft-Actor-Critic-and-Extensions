@@ -232,7 +232,7 @@ def run(args):
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(saved=args.saved_model, avg_reward=np.mean(scores_window))
+            state = envs.reset(saved=args.saved_model)
             score = 0
             episode_K = 0
 
