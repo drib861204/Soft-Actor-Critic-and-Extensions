@@ -229,6 +229,9 @@ def run(args):
             log_f.write('{},{},{},{}\n'.format(i_episode, frame, np.mean(scores_window), score))
             log_f.flush()
 
+            if np.mean(scores_window) > -10:
+                break
+
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
@@ -293,8 +296,8 @@ if __name__ == "__main__":
 
     #envs = Pendulum(args.render_evals)
     #eval_env = Pendulum(args.render_evals)
-    envs = Pendulum(args.render_evals, args.frames, args.interval_num)
-    eval_env = Pendulum(args.render_evals, args.frames, args.interval_num)
+    envs = Pendulum(args.render_evals)
+    eval_env = Pendulum(args.render_evals)
 
     #envs.seed=args.seed
     #eval_env.seed=args.seed+1

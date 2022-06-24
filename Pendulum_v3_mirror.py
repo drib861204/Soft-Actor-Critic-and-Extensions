@@ -21,11 +21,11 @@ from gym import spaces, logger
 
 
 class Pendulum(gym.Env):
-    def __init__(self, rend, frames, interval_num, w_tau=0):
-        self.frames = frames
-        self.interval_num = interval_num
-        self.cur_case = 1
-        self.weight_tau = w_tau
+    def __init__(self, rend):
+        #self.frames = frames
+        #self.interval_num = interval_num
+        #self.cur_case = 1
+        #self.weight_tau = w_tau
 
         self.theta_rod = 0
         self.theta_wheel = 0
