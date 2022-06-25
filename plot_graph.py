@@ -60,8 +60,6 @@ def save_graph():
     all_runs = []
 
     for run_num in range(num_runs):
-        run_num=3
-
         log_f_name = log_dir + f'/SAC_log_{run_num}.csv'
         print("loading data from : " + log_f_name)
         data = pd.read_csv(log_f_name)
