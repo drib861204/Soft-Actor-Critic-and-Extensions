@@ -161,7 +161,7 @@ def run(args):
         eps_decay (float): multiplicative factor (per episode) for decreasing epsilon
     """
     scores = []  # list containing scores from each episode
-    scores_window = deque(maxlen=30)  # last 100 scores
+    scores_window = deque(maxlen=args.scores_window_len)  # last 100 scores
     i_episode = 1
     frames = args.frames // args.worker
     state = envs.reset(saved=args.saved_model)
@@ -285,6 +285,7 @@ parser.add_argument("--rep_max", type=int, default=500, help="maximum steps in o
 parser.add_argument("-w_tau", type=float, default=0.0001, help="torque reward weight")
 parser.add_argument("-w_speed", type=float, default=0.0001, help="wheel speed reward weight")
 parser.add_argument("--interval_num", type=int, default=100, help="Curriculum Learning interval number")
+parser.add_argument("--scores_window_len", type=int, default=10, help="length of scores window")
 args = parser.parse_args()
 
 if __name__ == "__main__":

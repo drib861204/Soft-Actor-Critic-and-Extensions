@@ -6,6 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="")
 parser.add_argument("--trial", type=int, default=0, help="trial")
+parser.add_argument("--scores_window_len", type=int, default=10, help="length of scores window")
 args = parser.parse_args()
 
 
@@ -23,7 +24,7 @@ def save_graph():
     fig_height = 6
 
     # smooth out rewards to get a smooth and a less smooth (var) plot lines
-    window_len_smooth = 20
+    window_len_smooth = args.scores_window_len #20
     min_window_len_smooth = 1
     linewidth_smooth = 1.5
     alpha_smooth = 1
@@ -59,6 +60,8 @@ def save_graph():
     all_runs = []
 
     for run_num in range(num_runs):
+        run_num=3
+
         log_f_name = log_dir + f'/SAC_log_{run_num}.csv'
         print("loading data from : " + log_f_name)
         data = pd.read_csv(log_f_name)
@@ -104,7 +107,7 @@ def save_graph():
             #---------------------------------------#
 
             # smooth out rewards to get a smooth and a less smooth (var) plot lines
-            run['reward_smooth_' + str(i)] = run['raw_reward'].rolling(window=30, win_type='triang', min_periods=min_window_len_smooth).mean()
+            run['reward_smooth_' + str(i)] = run['raw_reward'].rolling(window=window_len_smooth, win_type='triang', min_periods=min_window_len_smooth).mean()
             run['reward_var_' + str(i)] = run['raw_reward'].rolling(window=window_len_var, win_type='triang', min_periods=min_window_len_var).mean()
 
             # plot the lines
