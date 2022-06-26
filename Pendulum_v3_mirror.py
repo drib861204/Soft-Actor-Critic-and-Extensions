@@ -21,7 +21,7 @@ from gym import spaces, logger
 
 
 class Pendulum(gym.Env):
-    def __init__(self, rend):
+    def __init__(self, rend, done_ang):
         #self.frames = frames
         #self.interval_num = interval_num
         #self.cur_case = 1
@@ -52,7 +52,7 @@ class Pendulum(gym.Env):
         self.momentum_rod = 0.95
         self.dt = 0.005
         self.gravity = 9.81
-        self.max_q1 = 5*pi/180 # stop training below this angle
+        self.max_q1 = done_ang*pi/180 # stop training below this angle
         self.max_q1dot = 1 #initial q1_dot default 0.3? to be verified
 
         self.wheel_max_speed = 28
@@ -195,8 +195,8 @@ class Pendulum(gym.Env):
             self.agent_state = (-self.state[0], -self.state[1], -self.state[2])
 
         done = bool(
-            q1 < -self.ang
-            or q1 > self.ang
+            q1 < -self.max_q1
+            or q1 > self.max_q1
         )
             #or q1_dot < -self.max_q1dot
             #or q1_dot > self.max_q1dot

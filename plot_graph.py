@@ -24,7 +24,7 @@ def save_graph():
     fig_height = 6
 
     # smooth out rewards to get a smooth and a less smooth (var) plot lines
-    window_len_smooth = args.scores_window_len #20
+    window_len_smooth = 20
     min_window_len_smooth = 1
     linewidth_smooth = 1.5
     alpha_smooth = 1

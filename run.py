@@ -285,7 +285,8 @@ parser.add_argument("--rep_max", type=int, default=500, help="maximum steps in o
 parser.add_argument("-w_tau", type=float, default=0.0001, help="torque reward weight")
 parser.add_argument("-w_speed", type=float, default=0.0001, help="wheel speed reward weight")
 parser.add_argument("--interval_num", type=int, default=100, help="Curriculum Learning interval number")
-parser.add_argument("--scores_window_len", type=int, default=10, help="length of scores window")
+parser.add_argument("--scores_window_len", type=int, default=20, help="length of scores window")
+parser.add_argument("--done_ang", type=float, default=5.0, help="max q1")
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -297,8 +298,8 @@ if __name__ == "__main__":
 
     #envs = Pendulum(args.render_evals)
     #eval_env = Pendulum(args.render_evals)
-    envs = Pendulum(args.render_evals)
-    eval_env = Pendulum(args.render_evals)
+    envs = Pendulum(args.render_evals, args.done_ang)
+    eval_env = Pendulum(args.render_evals, args.done_ang)
 
     #envs.seed=args.seed
     #eval_env.seed=args.seed+1
