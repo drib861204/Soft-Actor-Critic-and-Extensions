@@ -195,8 +195,8 @@ class Pendulum(gym.Env):
             self.agent_state = (-self.state[0], -self.state[1], -self.state[2])
 
         done = bool(
-            q1 < -self.max_q1
-            or q1 > self.max_q1
+            q1 < -self.ang
+            or q1 > self.ang
         )
             #or q1_dot < -self.max_q1dot
             #or q1_dot > self.max_q1dot
