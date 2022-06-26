@@ -206,7 +206,7 @@ def run(args):
         #    agent.step(s, a, r, ns, d, frame, ERE)
         agent.step(state, action, reward, next_state, [done], frame, ERE)
 
-        #print(time.time())
+        print(time.time())
 
         if ERE:
             eta_t = eta_0 + (eta_T - eta_0) * (frame / (frames + 1))
