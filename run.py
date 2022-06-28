@@ -89,7 +89,7 @@ def evaluate(frame, args, eval_runs=1, capture=False):
     Makes an evaluation run with the current episode
     """
 
-    #reward_batch = []
+    reward_batch = []
 
     for i in range(eval_runs):
 
@@ -97,7 +97,7 @@ def evaluate(frame, args, eval_runs=1, capture=False):
         #state_action_log = np.concatenate((state_action_log,[[1],[3]]),axis=1)
         #print(state_action_log)
 
-        state = eval_env.reset(saved=args.saved_model)
+        state = eval_env.reset(saved=args.saved_model, mode="test")
         rewards = 0
         rep = 0
         rep_max = args.rep_max
@@ -139,10 +139,13 @@ def evaluate(frame, args, eval_runs=1, capture=False):
             if done or rep >= rep_max:
                 break
 
+        reward_batch.append(rewards)
+
         if args.saved_model:
             transient_response(state_action_log)
+        else:
+            return np.mean(reward_batch)
 
-        #reward_batch.append(rewards)
     #if capture == False and args.saved_model == False:
     #    writer.add_scalar("Reward", np.mean(reward_batch), frame)
 
@@ -164,7 +167,7 @@ def run(args):
     scores_window = deque(maxlen=args.scores_window_len)  # last 100 scores
     i_episode = 1
     frames = args.frames // args.worker
-    state = envs.reset(saved=args.saved_model)
+    state = envs.reset(saved=args.saved_model, mode="train")
     score = 0
     eval_every = args.eval_every // args.worker
     eval_runs = args.eval_runs
@@ -184,8 +187,9 @@ def run(args):
         # print("run")
         rep += 1
 
-        #if frame % eval_every == 0 or frame == 1:
-        #    evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
+        if frame % eval_every == 0 or frame == 1:
+            x = evaluate(frame=frame * worker, args=args, eval_runs=eval_runs)
+            print("\neval_reward", x)
 
         if state[2] >= envs.wheel_max_speed or state[2] <= -envs.wheel_max_speed:
             action = np.array([0])
@@ -235,7 +239,7 @@ def run(args):
             # if i_episode % 100 == 0:
             #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode += 1
-            state = envs.reset(saved=args.saved_model)
+            state = envs.reset(saved=args.saved_model, mode="train")
             score = 0
             episode_K = 0
 
@@ -288,6 +292,7 @@ parser.add_argument("--interval_num", type=int, default=100, help="Curriculum Le
 parser.add_argument("--scores_window_len", type=int, default=20, help="length of scores window")
 parser.add_argument("--done_ang", type=float, default=5.0, help="max q1")
 args = parser.parse_args()
+
 
 if __name__ == "__main__":
 

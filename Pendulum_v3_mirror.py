@@ -89,13 +89,14 @@ class Pendulum(gym.Env):
             #print("font")
 
 
-    def reset(self, saved, avg_reward=-1000):
+    def reset(self, saved, mode, avg_reward=-1000):
         # self.state is for render, self.agent_state is for training
 
         self.ang = 2*pi/180 # reset angle
         self.low_ang = 0 # random lower bound
 
-        if saved == None:
+        #if saved == None:
+        if mode == "train":
             #interval = self.frames//self.interval_num
             '''if avg_reward > -50:
                 self.cur_case += 1
@@ -107,7 +108,8 @@ class Pendulum(gym.Env):
             #self.state = np.random.uniform(low=-reset_high, high=reset_high)
             self.state = np.array([reset_angle_random, 0, 0], dtype=np.float32)
             self.agent_state = np.array([abs(reset_angle_random), 0, 0], dtype=np.float32)
-        else:
+        #else:
+        elif mode == "test":
             self.state = np.array([self.ang, 0, 0], dtype=np.float32)
             self.agent_state = np.array([abs(self.ang), 0, 0], dtype=np.float32)
             # self.state = np.array([0, self.max_q1dot, 0],dtype=np.float32)
@@ -219,7 +221,7 @@ class Pendulum(gym.Env):
         # costs = 100 * q1 ** 2 + 1 * q1_dot ** 2 + 100 * torque ** 2 + 0.001 * q2_dot ** 2
 
         if done:
-            costs += 1000
+            costs += 100
 
         #if abs(q1) < 0.001 and abs(q1_dot) < 0.001 and abs(q2_dot) < 0.1 :
         #    costs -= 1000
